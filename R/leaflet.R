@@ -158,7 +158,27 @@ leaflet_diverging <- function(x, value = NULL, midpoint, by = NULL,
 assemble_leaflet <- function(md, spec, palette, direction = 1, popup = NULL,
                              tiles = "CartoDB.Positron", opacity = 0.8,
                              legend = TRUE, by = NULL) {
+  m <- leaflet_base(tiles)
+  m <- add_md_layer(m, md, spec, palette, direction, opacity, popup = popup,
+                    by = by)
+  if (isTRUE(legend)) {
+    m <- add_spec_legend(m, spec, palette, direction,
+                         scale_name(md$label, spec$note))
+  }
+  m
+}
+
+leaflet_base <- function(tiles) {
   check_leaflet()
+  m <- leaflet::leaflet(options = leaflet::leafletOptions(minZoom = 3))
+  if (!is.null(tiles)) m <- leaflet::addProviderTiles(m, tiles)
+  m
+}
+
+# One set of geometry on a map, optionally as a named group so that a layer
+# control can switch it on and off.
+add_md_layer <- function(m, md, spec, palette, direction = 1, opacity = 0.8,
+                         group = NULL, popup = NULL, by = NULL) {
   if (identical(md$kind, "raster")) {
     stop("leaflet maps here draw vector geometry, and this is a raster.\n",
          "  Use leaflet::addRasterImage() directly, or draw it with ",
@@ -168,19 +188,15 @@ assemble_leaflet <- function(md, spec, palette, direction = 1, popup = NULL,
   # EPSG:4326, always. Not display_crs() -- leaflet is Web Mercator and takes
   # WGS84 inputs, so the projection question is answered by the tile layer
   # rather than by us.
-  geometry <- sf::st_transform(md$geometry, 4326)
+  data <- sf::st_sf(geometry = sf::st_transform(md$geometry, 4326))
   colours <- value_colours(md$value, spec, palette, direction)
-
-  m <- leaflet::leaflet(options = leaflet::leafletOptions(minZoom = 3))
-  if (!is.null(tiles)) m <- leaflet::addProviderTiles(m, tiles)
-
   labels <- popup_labels(md, popup, by)
-  data <- sf::st_sf(geometry = geometry)
 
-  m <- switch(
+  switch(
     md$kind,
     polygon = leaflet::addPolygons(
-      m, data = data, fillColor = colours, fillOpacity = opacity,
+      m, data = data, group = group, fillColor = colours,
+      fillOpacity = opacity,
       # A hairline stroke in the fill colour, for the same reason the static
       # maps carry one: adjacent cells drawn as separate paths leave a seam.
       color = colours, weight = 0.5, opacity = 1,
@@ -189,15 +205,13 @@ assemble_leaflet <- function(md, spec, palette, direction = 1, popup = NULL,
                                                    bringToFront = TRUE),
       popup = labels),
     point = leaflet::addCircleMarkers(
-      m, data = data, fillColor = colours, fillOpacity = opacity,
-      color = colours, weight = 0.5, radius = 5, popup = labels),
+      m, data = data, group = group, fillColor = colours,
+      fillOpacity = opacity, color = colours, weight = 0.5, radius = 5,
+      popup = labels),
     line = leaflet::addPolylines(
-      m, data = data, color = colours, opacity = opacity, weight = 2,
-      popup = labels)
+      m, data = data, group = group, color = colours, opacity = opacity,
+      weight = 2, popup = labels)
   )
-
-  if (isTRUE(legend)) m <- add_spec_legend(m, spec, palette, direction, md)
-  m
 }
 
 # The colours, computed through the SAME spec the static map uses -- same
@@ -233,7 +247,8 @@ as_transform <- function(x) {
   scales::as.transform(x %||% "identity")
 }
 
-add_spec_legend <- function(m, spec, palette, direction, md) {
+add_spec_legend <- function(m, spec, palette, direction, title,
+                            group = NULL, class_index = NULL) {
   breaks <- leaflet_legend_breaks(spec)
   labels <- leaflet_legend_labels(spec)
 
@@ -241,8 +256,16 @@ add_spec_legend <- function(m, spec, palette, direction, md) {
     m, position = "bottomright",
     colors = value_colours(breaks, spec, palette, direction),
     labels = labels,
-    title = htmltools::HTML(gsub("\n", "<br/>",
-                                 scale_name(md$label, spec$note))),
+    # `group =` ties a legend to a layer group -- but only for OVERLAY groups.
+    # For the radio-button `baseGroups` a pair and a series need, leaflet
+    # never fires the events its legend binding listens for, so both legends
+    # stay on screen and one of them describes a layer that is not being shown.
+    # `sync_group_legends()` handles that case with the event leaflet does
+    # fire; this is still passed for the overlay case.
+    group = group,
+    className = paste(c("info legend", legend_class(class_index)),
+                      collapse = " "),
+    title = htmltools::HTML(gsub("\n", "<br/>", title)),
     opacity = 1
   )
 }
@@ -301,4 +324,261 @@ leaflet_legend_labels <- function(spec) {
   } else {
     squish_labels(breaks, spec$limits, isTRUE(spec$squished))(breaks)
   }
+}
+
+#' A surface and its uncertainty, interactively
+#'
+#' The interactive counterpart of [map_pair()]: both quantities on one map, with
+#' a control to switch between them.
+#'
+#' @inheritParams leaflet-maps
+#' @inheritParams map_pair
+#' @param labels A length-2 character vector naming the two quantities. These
+#'   are what the switch is labelled with, so they should read as names rather
+#'   than as units.
+#' @param position Where the layer control sits.
+#'
+#' @details
+#' # Why one map and a switch, rather than two maps side by side
+#'
+#' [map_pair()] draws two panels because a static figure has no other way to
+#' show two things at once, and it goes to some trouble -- shared extent, shared
+#' projection, one coastline, aligned panels -- to make them comparable cell by
+#' cell. All of that is machinery for approximating, on paper, something an
+#' interactive map gets for free.
+#'
+#' Switching layers on one map is a **blink comparison**: the same cells, at the
+#' same position and the same zoom, changing only in the quantity drawn. Nothing
+#' has to be aligned because nothing moved. Two side-by-side widgets would
+#' reintroduce exactly the alignment problem `map_pair()` exists to solve, and
+#' would need a synchronisation dependency to solve it again.
+#'
+#' The trade is that the two can no longer be seen simultaneously. When that is
+#' what you want -- a figure for a manuscript, or a reader who cannot click --
+#' [map_pair()] is the one to use.
+#'
+#' Each layer carries its own legend, shown and hidden with it, because the two
+#' are different quantities in different units.
+#'
+#' @return A \pkg{leaflet} widget.
+#'
+#' @seealso [map_pair()], the static original.
+#'
+#' @examples
+#' \dontrun{
+#' grid <- example_grid()
+#'
+#' leaflet_pair(grid, "density", "cv")
+#'
+#' leaflet_pair(grid, "density", "mess", uncertainty_kind = "diverging",
+#'              uncertainty_direction = -1,
+#'              labels = c("density", "extrapolation"))
+#' }
+#'
+#' @export
+leaflet_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
+                         by = NULL, coords = NULL, crs = NULL,
+                         kind = c("surface", "probability"),
+                         uncertainty_kind = c("surface", "diverging"),
+                         uncertainty_midpoint = 0, uncertainty_direction = 1,
+                         labels = NULL, transform = "auto", limits = NULL,
+                         probs = c(0, 0.99), popup = NULL,
+                         tiles = "CartoDB.Positron", opacity = 0.8,
+                         position = "topright") {
+  kind <- match.arg(kind)
+  uncertainty_kind <- match.arg(uncertainty_kind)
+
+  labels <- labels %||% c(value_label(rlang::enquo(value), value),
+                          value_label(rlang::enquo(uncertainty), uncertainty))
+
+  left <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                      label = labels[1])
+  right <- as_map_data(uncertainty_from %||% x, value = uncertainty, by = by,
+                       coords = coords, crs = crs, label = labels[2])
+  check_same_cells(left, right, !is.null(uncertainty_from))
+
+  specs <- list(
+    leaflet_spec(left$value, kind, transform, limits, probs),
+    leaflet_spec(right$value, uncertainty_kind, transform, NULL, probs,
+                 midpoint = uncertainty_midpoint)
+  )
+  palettes <- c(leaflet_palette(kind), leaflet_palette(uncertainty_kind))
+  directions <- c(1, uncertainty_direction)
+  names <- c(scale_name(left$label, specs[[1]]$note),
+             scale_name(right$label, specs[[2]]$note))
+  groups <- c(labels[1] %||% "value", labels[2] %||% "uncertainty")
+
+  m <- leaflet_base(tiles)
+  for (i in 1:2) {
+    md <- list(left, right)[[i]]
+    m <- add_md_layer(m, md, specs[[i]], palettes[i], directions[i], opacity,
+                      group = groups[i], popup = popup, by = by)
+    m <- add_spec_legend(m, specs[[i]], palettes[i], directions[i], names[i],
+                         group = groups[i], class_index = i)
+  }
+
+  # baseGroups, not overlayGroups: these are two views of the same cells and
+  # exactly one should be showing. Overlaid, the upper one hides the lower and
+  # the map silently shows whichever was added last.
+  m <- leaflet::addLayersControl(
+    m, baseGroups = groups, position = position,
+    options = leaflet::layersControlOptions(collapsed = FALSE))
+  sync_group_legends(m, groups)
+}
+
+#' A series over several periods, interactively
+#'
+#' The interactive counterpart of [map_panels()]: every period on one map, one
+#' shared scale, and a control to step through them.
+#'
+#' @inheritParams leaflet-maps
+#' @inheritParams map_panels
+#' @param position Where the layer control sits.
+#'
+#' @details
+#' # One legend, and it does not move
+#'
+#' The scale is computed once over every period pooled, exactly as in
+#' [map_panels()] -- both call the same `pooled_spec()`, so a cell of a given
+#' value is the same colour in the static figure and this one.
+#'
+#' Because the scale is shared, the legend is drawn **once and left alone**
+#' rather than tied to each layer. Stepping through the periods changes the map
+#' and not the legend, which is what makes the comparison readable: a colour
+#' that means 0.4 in spring still means 0.4 in autumn, and the legend sitting
+#' still is the visible evidence of that.
+#'
+#' It is also the interactive form that suits a series best. Small multiples ask
+#' a reader to compare across a page; stepping through them in place compares by
+#' change-blindness instead, which is far more sensitive to a small shift and
+#' needs no alignment at all.
+#'
+#' @return A \pkg{leaflet} widget.
+#'
+#' @seealso [map_panels()], the static original.
+#'
+#' @examples
+#' \dontrun{
+#' grid <- example_grid()
+#' seasons <- cbind(spring = grid$density,
+#'                  summer = grid$density * 2.5,
+#'                  autumn = grid$density * 0.4)
+#'
+#' leaflet_panels(grid, seasons, label = "animals per km2")
+#' }
+#'
+#' @export
+leaflet_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
+                           titles = NULL,
+                           kind = c("surface", "probability", "diverging"),
+                           midpoint = NULL, direction = 1, label = NULL,
+                           transform = "auto", limits = NULL,
+                           probs = c(0, 0.99), popup = NULL,
+                           tiles = "CartoDB.Positron", opacity = 0.8,
+                           legend = TRUE, position = "topright") {
+  kind <- match.arg(kind)
+  panels <- panel_values(x, values)
+  titles <- titles %||% names(panels)
+
+  mds <- lapply(panels, function(v) {
+    as_map_data(x, value = v, by = by, coords = coords, crs = crs,
+                label = label)
+  })
+
+  # The same pooled scale the static version uses, from the same function --
+  # so a period drawn here and drawn by map_panels() is the same colour.
+  pooled <- unlist(lapply(mds, function(m) m$value), use.names = FALSE)
+  shared <- pooled_spec(pooled, kind = kind, transform = transform,
+                        limits = limits, probs = probs, midpoint = midpoint)
+  palette <- leaflet_palette(kind)
+
+  m <- leaflet_base(tiles)
+  for (i in seq_along(mds)) {
+    m <- add_md_layer(m, mds[[i]], shared, palette, direction, opacity,
+                      group = titles[i], popup = popup, by = by)
+  }
+
+  if (isTRUE(legend)) {
+    # No `group =` here, deliberately. The scale is shared, so the legend
+    # belongs to the figure rather than to any one period -- and a legend that
+    # sits still while the map changes under it is the visible evidence that
+    # the periods are on one scale.
+    m <- add_spec_legend(m, shared, palette, direction,
+                         scale_name(label %||% mds[[1]]$label, shared$note))
+  }
+
+  m <- leaflet::addLayersControl(
+    m, baseGroups = titles, position = position,
+    options = leaflet::layersControlOptions(collapsed = FALSE))
+
+  for (g in titles[-1]) m <- leaflet::hideGroup(m, g)
+  m
+}
+
+# The scale spec for one interactive layer. `pooled_spec()` covers the shared
+# case; this is its single-layer sibling and they agree by construction.
+leaflet_spec <- function(values, kind, transform, limits, probs,
+                         midpoint = NULL) {
+  pooled_spec(values, kind = kind, transform = transform, limits = limits,
+              probs = probs, midpoint = midpoint)
+}
+
+leaflet_palette <- function(kind) {
+  switch(kind, surface = "sequential", probability = "bounded",
+         diverging = "diverging")
+}
+
+
+## Legends that follow a radio-button layer control.
+##
+## `addLegend(group =)` binds a legend to a layer group by listening for
+## `overlayadd` and `overlayremove`. A pair and a series both want radio
+## buttons rather than checkboxes -- exactly one layer showing -- which means
+## `baseGroups`, and leaflet fires `baselayerchange` for those instead. So the
+## binding never fires: every legend stays on screen, and on a pair one of them
+## describes a quantity that is not being drawn.
+##
+## Ten lines of JavaScript on the event leaflet does fire. The alternative was
+## to use `overlayGroups` so the built-in binding works, and that is worse: two
+## overlays can both be on at once, the upper hides the lower, and the map shows
+## whichever happened to be added last with no way to tell.
+
+legend_class <- function(index) {
+  if (is.null(index)) return(NULL)
+  paste0("fancymaps-legend-", index)
+}
+
+sync_group_legends <- function(m, groups) {
+  if (!requireNamespace("htmlwidgets", quietly = TRUE)) {
+    warning("legends cannot be tied to the layer control without the ",
+            "htmlwidgets package, so every legend is shown at once.\n",
+            "  One of them describes a layer that is not on the map.",
+            call. = FALSE)
+    return(m)
+  }
+
+  js <- sprintf("
+function(el, x) {
+  var groups = [%s];
+  var show = function(name) {
+    groups.forEach(function(g, i) {
+      var nodes = el.querySelectorAll('.fancymaps-legend-' + (i + 1));
+      for (var j = 0; j < nodes.length; j++) {
+        nodes[j].style.display = (g === name) ? '' : 'none';
+      }
+    });
+  };
+  this.on('baselayerchange', function(e) { show(e.name); });
+  show(groups[0]);
+}", paste(vapply(groups, js_string, character(1)), collapse = ", "))
+
+  htmlwidgets::onRender(m, js)
+}
+
+# A group name as a JavaScript string literal. Group names are whatever the
+# caller passed as labels, so they can contain quotes and backslashes.
+js_string <- function(x) {
+  x <- gsub("\\\\", "\\\\\\\\", x)
+  x <- gsub("'", "\\\\'", x)
+  paste0("'", x, "'")
 }

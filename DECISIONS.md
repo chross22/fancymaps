@@ -332,6 +332,52 @@ breaks are worked out here rather than taken from `ggplot2`, and `pretty()`
 stops below the cap -- so the static legend read `>= 0.879` and the interactive
 one stopped at `0.8` with no sign that anything had been capped.
 
+### A pair and a series become a switch, not two maps
+
+`leaflet_pair()` and `leaflet_panels()` put every layer on **one** map behind a
+radio control rather than placing widgets side by side.
+
+That is not a shortcut around synchronising two maps. It is the better
+interactive form, and it follows from what `map_pair()` is doing: shared extent,
+shared projection, one coastline, aligned panels -- all machinery for
+approximating, on paper, a comparison the reader would rather make by looking at
+one place twice. Switching layers is a **blink comparison**: same cells, same
+position, same zoom, changing only in the quantity drawn. Nothing needs aligning
+because nothing moved. Two side-by-side widgets would reintroduce exactly the
+alignment problem the static pair exists to solve, and need a synchronisation
+dependency to solve it again.
+
+For a series it is stronger still. Small multiples ask a reader to compare
+across a page; stepping through them in place compares by change-blindness,
+which is far more sensitive to a small shift.
+
+The trade is that two things can no longer be seen at once. When that is what is
+wanted -- a manuscript figure, a reader who cannot click -- the static verbs are
+the answer, and they stay.
+
+**One legend for a series, two for a pair**, and the difference is the point.
+The series shares one scale, so its legend is drawn once and does not move while
+the periods change under it -- that stillness is the visible evidence that the
+periods are comparable. A pair's two quantities are in different units, so each
+legend follows its own layer.
+
+**Making a legend follow a radio button needed ten lines of JavaScript.**
+`addLegend(group =)` binds by listening for `overlayadd` and `overlayremove`,
+and a radio control is `baseGroups`, which fires `baselayerchange` instead --
+so the binding never fires. Both legends stayed on screen, one of them
+describing a layer that was not being drawn. The alternative was `overlayGroups`
+so the built-in binding works, and that is worse: two overlays can both be on,
+the upper hides the lower, and the map shows whichever was added last with no
+way to tell.
+
+Found by rendering it and looking, not by a test -- the widget was structurally
+correct and the figure was wrong.
+
+**One scale function, not two.** `pooled_spec()` is shared by `map_panels()` and
+`leaflet_panels()`, extracted rather than duplicated for the reason the palette
+already taught: a scale computed in two places is a scale that will eventually
+be computed two ways. Asserted period for period at exact hex equality.
+
 ### What is deliberately not carried over
 
 * **The projection.** `leaflet` is Web Mercator and takes WGS84 inputs, so
@@ -433,9 +479,6 @@ neighbours.
 * **A vignette.** The package documentation points at [surface_scale()] and
   [diverging_scale()] for the scale reasoning rather than at a vignette, but a
   worked one covering both renderers would be better than either.
-* **Interactive pairs and panels.** `leaflet_*()` covers the three single maps.
-  A pair is two synchronised widgets and a series is a layer control; both are
-  real work and neither is started.
 * **`rnaturalearthhires` is declared in `Suggests`** and is not on CRAN, so
   `R CMD check` needs `_R_CHECK_FORCE_SUGGESTS_=false` on a machine without it.
   Status with that set: **0 errors, 0 warnings, 0 notes.**

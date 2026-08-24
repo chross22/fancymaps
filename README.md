@@ -66,7 +66,17 @@ leaflet_surface(grid, "density", label = "animals per km2",
                 popup = c("depth", "sst"))
 leaflet_probability(grid, "occupancy")
 leaflet_diverging(grid, "mess", midpoint = 0, direction = -1)
+
+# a pair and a series become a switch rather than two maps
+leaflet_pair(grid, "density", "cv")
+leaflet_panels(grid, seasons, label = "animals per km2")
 ```
+
+A pair and a series put every layer on one map behind a radio control. That is
+the better interactive form, not a shortcut: switching layers is a blink
+comparison — same cells, same position, same zoom — so nothing needs aligning
+because nothing moved. The static `map_pair()` and `map_panels()` remain the
+answer when both have to be visible at once.
 
 These exist for the **decisions**, not the rendering — `leaflet` does that
 perfectly well on its own. Handing it a grid directly means re-deciding the

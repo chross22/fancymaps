@@ -86,23 +86,8 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
 
   # The whole reason this function exists: one scale, computed over everything.
   pooled <- unlist(lapply(mds, function(m) m$value), use.names = FALSE)
-  shared <- switch(
-    kind,
-    surface = surface_scale(pooled, transform = transform, limits = limits,
-                            probs = probs),
-    probability = list(limits = limits %||% c(0, 1)),
-    diverging = {
-      d <- diverging_scale(pooled, midpoint = midpoint, limits = limits)
-      d$rescaler <- diverging_rescaler(d$midpoint)
-      d$labels <- squish_labels(ggplot2::waiver(), d$limits, d$squished)
-      d
-    }
-  )
-  if (identical(kind, "probability")) {
-    shared$breaks <- seq(shared$limits[1], shared$limits[2], length.out = 5)
-    shared$transform <- "identity"
-    shared$squished <- FALSE
-  }
+  shared <- pooled_spec(pooled, kind = kind, transform = transform,
+                        limits = limits, probs = probs, midpoint = midpoint)
 
   panel_theme <- theme_fancymap_panel(base_size = base_size,
                                       graticule = graticule)
@@ -173,4 +158,34 @@ panel_values <- function(x, values) {
 # panel too narrow to see, so it wraps towards square.
 panel_columns <- function(n) {
   if (n <= 3) n else ceiling(sqrt(n))
+}
+
+# One scale over every panel pooled, whatever the panels are drawn by.
+#
+# Shared with `leaflet_panels()` rather than written twice. The static and
+# interactive versions of a series have to agree about what the scale is or
+# they are two different figures, and a scale computed in two places is a scale
+# that will eventually be computed two ways -- which is exactly how the leaflet
+# ramp came to differ from the ggplot2 one in the last hex digit.
+pooled_spec <- function(pooled, kind, transform = "auto", limits = NULL,
+                        probs = c(0, 0.99), midpoint = NULL) {
+  spec <- switch(
+    kind,
+    surface = surface_scale(pooled, transform = transform, limits = limits,
+                            probs = probs),
+    probability = list(limits = limits %||% c(0, 1)),
+    diverging = {
+      d <- diverging_scale(pooled, midpoint = midpoint, limits = limits)
+      d$rescaler <- diverging_rescaler(d$midpoint)
+      d$labels <- squish_labels(ggplot2::waiver(), d$limits, d$squished)
+      d
+    }
+  )
+  if (identical(kind, "probability")) {
+    spec$breaks <- seq(spec$limits[1], spec$limits[2], length.out = 5)
+    spec$transform <- "identity"
+    spec$squished <- FALSE
+    spec$note <- NULL
+  }
+  spec
 }

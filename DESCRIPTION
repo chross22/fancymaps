@@ -37,6 +37,7 @@ Imports:
     utils
 Suggests:
     htmltools,
+    htmlwidgets,
     knitr,
     leaflet,
     rmarkdown,

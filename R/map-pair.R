@@ -81,7 +81,9 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
                      coastline = TRUE, region = NULL,
                      transform = "auto", limits = NULL, probs = c(0, 0.99),
                      title = NULL, subtitle = NULL, caption = NULL,
-                     scalebar = TRUE, north = TRUE, graticule = FALSE,
+                     scalebar = TRUE, north = TRUE,
+                     scalebar_position = "bl", north_position = "tr",
+                     graticule = FALSE,
                      base_size = 12, expand = 0.02) {
   kind <- match.arg(kind)
   uncertainty_kind <- match.arg(uncertainty_kind)
@@ -114,7 +116,9 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
                      probs = probs, land = land, region = region,
                      extent = extent, crs = crs, graticule = graticule,
                      title = titles[1] %||% NULL, base_size = base_size,
-                     theme = panel_theme, scalebar = scalebar, north = north)
+                     theme = panel_theme, scalebar = scalebar, north = north,
+                     scalebar_position = scalebar_position,
+                     north_position = north_position)
 
   p_right <- panel_of(right, kind = uncertainty_kind, transform = transform,
                       limits = NULL, probs = probs, land = land,
@@ -148,7 +152,8 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
 panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
                      crs, graticule, title, base_size, theme,
                      midpoint = NULL, direction = 1, scalebar = FALSE,
-                     north = FALSE, name = NULL, spec = NULL) {
+                     north = FALSE, scalebar_position = "bl",
+                     north_position = "tr", name = NULL, spec = NULL) {
   # A caller that has already settled the scale hands the WHOLE spec down,
   # rather than the transform and the limits for this panel to re-derive from.
   #
@@ -188,8 +193,18 @@ panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
                midpoint = if (identical(kind, "diverging")) spec$midpoint else NULL) +
     coord_for(extent, graticule)
 
-  if (isTRUE(scalebar)) p <- p + scale_bar(extent, base_size = base_size)
-  if (isTRUE(north)) p <- p + north_arrow(extent, base_size = base_size)
+  check_furniture_corners(
+    c(scalebar = if (isTRUE(scalebar)) scalebar_position,
+      north = if (isTRUE(north)) north_position))
+
+  if (isTRUE(scalebar)) {
+    p <- p + scale_bar(extent, position = scalebar_position,
+                       base_size = base_size)
+  }
+  if (isTRUE(north)) {
+    p <- p + north_arrow(extent, position = north_position,
+                         base_size = base_size)
+  }
 
   p + ggplot2::labs(title = title) + theme
 }

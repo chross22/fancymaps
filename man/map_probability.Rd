@@ -19,6 +19,8 @@ map_probability(
   caption = NULL,
   scalebar = TRUE,
   north = TRUE,
+  scalebar_position = "bl",
+  north_position = "tr",
   inset = FALSE,
   inset_position = "br",
   inset_size = 0.3,
@@ -61,6 +63,11 @@ coastline -- is appended to it.}
 
 \item{scalebar, north}{Whether to draw the furniture. See \code{\link[=scale_bar]{scale_bar()}} and
 \code{\link[=north_arrow]{north_arrow()}}.}
+
+\item{scalebar_position, north_position}{Which corner each sits in: \code{"bl"},
+\code{"br"}, \code{"tl"} or \code{"tr"}. Two pieces of furniture asked into the same
+corner are warned about rather than moved -- which corner is free depends
+on where the data sits, and only the caller can see that.}
 
 \item{inset}{Whether to draw a locator inset -- a small wider map with this
 figure's extent marked on it. \code{FALSE} by default, unlike the scale bar and

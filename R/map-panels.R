@@ -66,7 +66,9 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
                        coastline = TRUE, region = NULL,
                        transform = "auto", limits = NULL, probs = c(0, 0.99),
                        title = NULL, subtitle = NULL, caption = NULL,
-                       scalebar = TRUE, north = TRUE, graticule = FALSE,
+                       scalebar = TRUE, north = TRUE,
+                       scalebar_position = "bl", north_position = "tr",
+                       graticule = FALSE,
                        base_size = 11, expand = 0.02) {
   kind <- match.arg(kind)
   panels <- panel_values(x, values)
@@ -119,6 +121,7 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
       theme = panel_theme,
       scalebar = isTRUE(scalebar) && i == 1L,
       north = isTRUE(north) && i == 1L,
+      scalebar_position = scalebar_position, north_position = north_position,
       name = scale_name(label %||% mds[[i]]$label, shared$note)
     )
   })

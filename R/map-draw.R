@@ -8,8 +8,10 @@
 assemble_map <- function(md, scales, crs, coastline = TRUE, region = NULL,
                          graticule = FALSE, title = NULL, subtitle = NULL,
                          caption = NULL, notes = list(), scalebar = TRUE,
-                         north = TRUE, inset = FALSE, inset_position = "br",
-                         inset_size = 0.3, inset_zoom = 8, base_size = 12,
+                         north = TRUE, scalebar_position = "bl",
+                         north_position = "tr", inset = FALSE,
+                         inset_position = "br", inset_size = 0.3,
+                         inset_zoom = 8, base_size = 12,
                          theme = NULL, expand = 0.02, extent = NULL) {
   md <- project_md(md, crs)
   box <- extent %||% map_extent(md, expand)
@@ -25,8 +27,19 @@ assemble_map <- function(md, scales, crs, coastline = TRUE, region = NULL,
     scales +
     coord_for(box, graticule)
 
-  if (isTRUE(scalebar)) p <- p + scale_bar(box, base_size = base_size)
-  if (isTRUE(north)) p <- p + north_arrow(box, base_size = base_size)
+  check_furniture_corners(
+    c(scalebar = if (isTRUE(scalebar)) scalebar_position,
+      north = if (isTRUE(north)) north_position,
+      inset = if (!isFALSE(inset)) inset_position))
+
+  if (isTRUE(scalebar)) {
+    p <- p + scale_bar(box, position = scalebar_position,
+                       base_size = base_size)
+  }
+  if (isTRUE(north)) {
+    p <- p + north_arrow(box, position = north_position,
+                         base_size = base_size)
+  }
   if (!isFALSE(inset)) {
     # The inset resolves its own coastline, at its own width and so at its own
     # resolution -- a 1:10m shoreline is wasted on a map of the Gulf of Maine
@@ -85,4 +98,35 @@ shared_extent <- function(mds, expand = 0.02) {
       crs = crs),
     expand
   )
+}
+
+# Two pieces of furniture in one corner.
+#
+# Warned about rather than rearranged. Which corner is free depends on where
+# the data happens to sit, and this has no way to know that -- so moving one
+# automatically would trade a collision the caller asked for against one they
+# did not. Naming both is enough to fix it in one edit.
+check_furniture_corners <- function(positions) {
+  positions <- positions[!vapply(positions, is.null, logical(1))]
+  if (length(positions) < 2) return(invisible(NULL))
+
+  positions <- unlist(positions)
+  clashes <- unique(positions[duplicated(positions)])
+  for (corner in clashes) {
+    who <- names(positions)[positions == corner]
+    warning("the ", paste(who, collapse = " and the "), " are both in the ",
+            corner_name(corner), " corner and will overlap.\n  Move one with ",
+            paste0("`", who[2], "_position = \"", other_corner(corner), "\"`"),
+            ", or turn it off.", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+corner_name <- function(x) {
+  c(bl = "bottom-left", br = "bottom-right",
+    tl = "top-left", tr = "top-right")[[x]]
+}
+
+other_corner <- function(x) {
+  c(bl = "br", br = "bl", tl = "tr", tr = "tl")[[x]]
 }

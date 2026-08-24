@@ -29,6 +29,8 @@ map_pair(
   caption = NULL,
   scalebar = TRUE,
   north = TRUE,
+  scalebar_position = "bl",
+  north_position = "tr",
   graticule = FALSE,
   base_size = 12,
   expand = 0.02
@@ -90,6 +92,11 @@ coastline -- is appended to it.}
 
 \item{scalebar, north}{Whether to draw the furniture. See \code{\link[=scale_bar]{scale_bar()}} and
 \code{\link[=north_arrow]{north_arrow()}}.}
+
+\item{scalebar_position, north_position}{Which corner each sits in: \code{"bl"},
+\code{"br"}, \code{"tl"} or \code{"tr"}. Two pieces of furniture asked into the same
+corner are warned about rather than moved -- which corner is free depends
+on where the data sits, and only the caller can see that.}
 
 \item{graticule}{Whether to label coordinates. Off by default; see
 \code{\link[=theme_fancymap]{theme_fancymap()}}.}

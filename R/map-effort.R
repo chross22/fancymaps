@@ -57,7 +57,9 @@ map_effort <- function(tracks = NULL, points = NULL, value = NULL,
                        coords = NULL, crs = NULL, label = NULL,
                        coastline = TRUE, region = NULL,
                        title = NULL, subtitle = NULL, caption = NULL,
-                       scalebar = TRUE, north = TRUE, graticule = FALSE,
+                       scalebar = TRUE, north = TRUE,
+                       scalebar_position = "bl", north_position = "tr",
+                       graticule = FALSE,
                        base_size = 12, theme = NULL, bin_threshold = 2000,
                        expand = 0.02) {
   if (is.null(tracks) && is.null(points)) {
@@ -127,8 +129,18 @@ map_effort <- function(tracks = NULL, points = NULL, value = NULL,
   p <- p + land_layer(land) + region_layer(region, crs) +
     coord_for(extent, graticule)
 
-  if (isTRUE(scalebar)) p <- p + scale_bar(extent, base_size = base_size)
-  if (isTRUE(north)) p <- p + north_arrow(extent, base_size = base_size)
+  check_furniture_corners(
+    c(scalebar = if (isTRUE(scalebar)) scalebar_position,
+      north = if (isTRUE(north)) north_position))
+
+  if (isTRUE(scalebar)) {
+    p <- p + scale_bar(extent, position = scalebar_position,
+                       base_size = base_size)
+  }
+  if (isTRUE(north)) {
+    p <- p + north_arrow(extent, position = north_position,
+                         base_size = base_size)
+  }
 
   p +
     ggplot2::labs(title = title, subtitle = subtitle,

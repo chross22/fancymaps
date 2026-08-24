@@ -47,6 +47,9 @@ map_pair(grid, "density", "mess",
 # with a locator inset, for saying where in the world this is
 map_surface(grid, "density", inset = TRUE)
 
+# furniture goes where the data leaves room for it
+map_surface(grid, "density", north_position = "br", scalebar_position = "bl")
+
 # a series, on one shared scale
 map_panels(grid, cbind(spring = grid$density, summer = grid$density * 2.5))
 

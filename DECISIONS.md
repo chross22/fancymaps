@@ -261,6 +261,20 @@ downstream `+` a caller had written.
 Costs about 0.15 s: 0.68 s for the Gulf of Maine surface with an inset against
 0.53 s without.
 
+### Placing the furniture
+
+`scalebar_position` and `north_position` on every verb, alongside the
+`inset_position` the inset already had. The corner a piece of furniture should
+sit in is a property of where the data happens to sit, which no default can
+know: on the `dsmfit` effort map the north arrow lands over Nova Scotia at the
+default corner, and there is nothing wrong with the default -- it is wrong for
+that figure. `north_position = "br"` puts it in open water.
+
+Two pieces asked into the same corner are **warned about, not rearranged**.
+Moving one automatically would trade a collision the caller asked for against
+one they did not, since the free corner depends on the data. The warning names
+both pieces and the argument that moves one.
+
 ---
 
 ## Performance
@@ -380,9 +394,6 @@ warning.
 
 ## Not done yet
 
-* **Furniture placement arguments.** `scale_bar()` and `north_arrow()` take a
-  `position`, but the map verbs do not pass one through, so the corner is fixed.
-  On the `dsmfit` effort map the arrow lands over Nova Scotia.
 * **Visual regression tests.** The convention is that every figure change is
   rendered and looked at. `vdiffr` would make that a test rather than a habit;
   it is not installed here, so it is not in `Suggests` yet.

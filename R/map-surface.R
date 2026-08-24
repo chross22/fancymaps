@@ -26,6 +26,10 @@
 #'   coastline -- is appended to it.
 #' @param scalebar,north Whether to draw the furniture. See [scale_bar()] and
 #'   [north_arrow()].
+#' @param scalebar_position,north_position Which corner each sits in: `"bl"`,
+#'   `"br"`, `"tl"` or `"tr"`. Two pieces of furniture asked into the same
+#'   corner are warned about rather than moved -- which corner is free depends
+#'   on where the data sits, and only the caller can see that.
 #' @param inset Whether to draw a locator inset -- a small wider map with this
 #'   figure's extent marked on it. `FALSE` by default, unlike the scale bar and
 #'   north arrow, because an inset sits over a corner of the data rather than in
@@ -76,7 +80,9 @@ map_surface <- function(x, value = NULL, by = NULL, coords = NULL, crs = NULL,
                         label = NULL, coastline = TRUE, region = NULL,
                         transform = "auto", limits = NULL, probs = c(0, 0.99),
                         title = NULL, subtitle = NULL, caption = NULL,
-                        scalebar = TRUE, north = TRUE, inset = FALSE,
+                        scalebar = TRUE, north = TRUE,
+                        scalebar_position = "bl", north_position = "tr",
+                        inset = FALSE,
                         inset_position = "br", inset_size = 0.3,
                         inset_zoom = 8, graticule = FALSE,
                         base_size = 12, theme = NULL, expand = 0.02) {
@@ -96,7 +102,9 @@ map_surface <- function(x, value = NULL, by = NULL, coords = NULL, crs = NULL,
     crs = crs, coastline = coastline, region = region, graticule = graticule,
     title = title, subtitle = subtitle, caption = caption,
     notes = list(squish_note(spec, md$label)),
-    scalebar = scalebar, north = north, inset = inset,
+    scalebar = scalebar, north = north,
+    scalebar_position = scalebar_position,
+    north_position = north_position, inset = inset,
     inset_position = inset_position, inset_size = inset_size,
     inset_zoom = inset_zoom, base_size = base_size, theme = theme,
     expand = expand
@@ -146,7 +154,9 @@ map_probability <- function(x, value = NULL, by = NULL, coords = NULL,
                             crs = NULL, label = NULL, coastline = TRUE,
                             region = NULL, limits = c(0, 1),
                             title = NULL, subtitle = NULL, caption = NULL,
-                            scalebar = TRUE, north = TRUE, inset = FALSE,
+                            scalebar = TRUE, north = TRUE,
+                            scalebar_position = "bl", north_position = "tr",
+                            inset = FALSE,
                             inset_position = "br", inset_size = 0.3,
                             inset_zoom = 8, graticule = FALSE,
                             base_size = 12, theme = NULL, expand = 0.02) {
@@ -177,7 +187,9 @@ map_probability <- function(x, value = NULL, by = NULL, coords = NULL,
       paste0(outside, " cell(s) fall outside [", limits[1], ", ", limits[2],
              "] and are drawn at the ends.")
     }),
-    scalebar = scalebar, north = north, inset = inset,
+    scalebar = scalebar, north = north,
+    scalebar_position = scalebar_position,
+    north_position = north_position, inset = inset,
     inset_position = inset_position, inset_size = inset_size,
     inset_zoom = inset_zoom, base_size = base_size, theme = theme,
     expand = expand
@@ -230,7 +242,9 @@ map_diverging <- function(x, value = NULL, midpoint, by = NULL, coords = NULL,
                           region = NULL, limits = NULL, probs = c(0.01, 0.99),
                           direction = 1,
                           title = NULL, subtitle = NULL, caption = NULL,
-                          scalebar = TRUE, north = TRUE, inset = FALSE,
+                          scalebar = TRUE, north = TRUE,
+                          scalebar_position = "bl", north_position = "tr",
+                          inset = FALSE,
                           inset_position = "br", inset_size = 0.3,
                           inset_zoom = 8, graticule = FALSE,
                           base_size = 12, theme = NULL, expand = 0.02) {
@@ -252,7 +266,9 @@ map_diverging <- function(x, value = NULL, midpoint, by = NULL, coords = NULL,
     graticule = graticule, title = title, subtitle = subtitle,
     caption = caption,
     notes = list(squish_note(spec, md$label)),
-    scalebar = scalebar, north = north, inset = inset,
+    scalebar = scalebar, north = north,
+    scalebar_position = scalebar_position,
+    north_position = north_position, inset = inset,
     inset_position = inset_position, inset_size = inset_size,
     inset_zoom = inset_zoom, base_size = base_size, theme = theme,
     expand = expand

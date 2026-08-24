@@ -259,7 +259,18 @@ obvious in a PNG. Four more were, here.
     `respect` was irrelevant and is not in the code. Change one thing at
     a time.
 
-5.  **The north arrow’s label clipped.** Drawn above the arrow, the
+5.  **A pair’s capped panel said nothing.** A single map appends the cap
+    note to its caption and
+    [`map_panels()`](https://camilleross.org/fancymaps/reference/map_panels.md)
+    to the shared one, but a pair’s panels resolve their scales
+    separately, and neither path ran – so the density panel of
+    `dsmfit`’s projection pair capped at its 99th percentile in silence,
+    which is the exact thing squishing instead of censoring was meant to
+    prevent. Each panel of a pair now carries its own note. Found
+    drawing the first customer’s actual figure, not by any test; the
+    regression test and an updated `pair` snapshot now exist.
+
+6.  **The north arrow’s label clipped.** Drawn above the arrow, the
     reserved height had to cover a glyph in map units plus a text line
     in points, and the `N` pushed past the top of the panel at some
     figure sizes and not others. The label now goes below the arrow.

@@ -24,6 +24,9 @@
 #'     shared scale, so the panels can be compared.}
 #'   \item{[map_effort()]}{Survey effort and detections: lines, points, and
 #'     binning when there are too many of them to draw.}
+#'   \item{[hex_surface()]}{Binned values as polygons, for a quantity that
+#'     bins like effort but needs a different scale -- residuals, which
+#'     diverge around their own mean.}
 #' }
 #'
 #' @section What it accepts:

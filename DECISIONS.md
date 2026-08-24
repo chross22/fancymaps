@@ -483,6 +483,37 @@ neighbours.
 
 ---
 
+## The first customer arrived
+
+`dsmfit` now draws its three hand-rolled maps through this package -- the
+projection-and-MESS pair via `map_pair()`, the binned residual map via
+`hex_surface()` + `map_diverging()`, and the spatial partial effect via
+`map_diverging()` on a raster. Its `config/versions.yml` pins this package by
+commit alongside the other layer packages.
+
+Integration is a test nothing else is, and it found two defects here that 249
+tests and 14 snapshots had not:
+
+* **`hex_surface()` did not exist.** Requirement 4 of the requirements note --
+  residuals in space, binned -- was only reachable through `map_effort()`,
+  which bins onto a sequential scale. Binned residuals need a diverging one
+  centred on their own mean. The binning existed, exported behind the wrong
+  verb.
+* **A capped panel of `map_pair()` said nothing** (bug 5 above). Both single
+  maps and `map_panels()` carried the cap note; the pair's panels resolve
+  their scales separately and neither path ran. Found on the first real
+  figure drawn.
+
+Two conversion lessons that belong to callers rather than to this package,
+recorded in `dsmfit`'s comments and worth repeating: adding a `geom_sf` layer
+to a finished map **replaces its `coord_sf`** and silently discards the fixed
+extent -- annotate with `geom_point` in the display CRS's own units instead.
+And a pipeline whose model frame carries kilometres has to multiply back to
+metres before anything here sees it; nothing can catch that, because 400 is a
+plausible number in either unit.
+
+---
+
 ## Standing caveats
 
 Every requirement in `dsmfit`'s `docs/02-mapping-package.md` is implemented,

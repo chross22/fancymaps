@@ -51,6 +51,28 @@ map_panels(grid, cbind(spring = grid$density, summer = grid$density * 2.5))
 map_effort(points = sightings, size = "group_size")
 ```
 
+## Interactive
+
+The same maps as `leaflet` widgets — pan, zoom, click a cell for its value:
+
+```r
+leaflet_surface(grid, "density", label = "animals per km2",
+                popup = c("depth", "sst"))
+leaflet_probability(grid, "occupancy")
+leaflet_diverging(grid, "mess", midpoint = 0, direction = -1)
+```
+
+These exist for the **decisions**, not the rendering — `leaflet` does that
+perfectly well on its own. Handing it a grid directly means re-deciding the
+scale at the call site, and `leaflet::colorNumeric()` decides differently:
+linear, over the full data range, with no capping. The static figure and the
+interactive one then show the same numbers in different colours. These reuse the
+same scale objects, and the test suite asserts the two agree at exact hex
+equality, cell for cell.
+
+One thing to know: land comes from the tile provider, so unlike every static map
+here, **these need the network at draw time**.
+
 ## What it accepts
 
 Not one blessed type. `as_map_data()` takes:
@@ -87,6 +109,15 @@ because they mean opposite things and look identical.
 **One projection per figure.** Taken from the data when it is projected, and a
 Lambert azimuthal equal-area centred on the data when it is lon/lat. Areas are
 computed in an equal-area projection regardless, never in the display one.
+
+**That the CRS you state matches the numbers you hand over.** Every layer in a
+figure is transformed to one system before anything is drawn, so they agree by
+construction. What is checked is the place a coordinate system is *asserted*
+rather than read — `crs =` on a plain data frame. Eastings and northings
+declared as lon/lat are an error, because longitude cannot pass 180; degrees
+declared as metres are a warning, because read as metres they describe a study
+area a few hundred metres across in the wrong ocean. Neither can tell UTM 19N
+from 20N, and neither tries.
 
 **A scale that was chosen.** For a skewed quantity, a transform selected by a
 stated rule, reported when it fires, and named in the legend, with breaks at

@@ -150,10 +150,67 @@ as_sf <- function(x, coords = NULL, crs = NULL) {
          "Pass `crs =` to say which: crs = 4326 for lon/lat, or the EPSG code ",
          "the model was fitted in.", call. = FALSE)
   }
+  check_crs_plausible(x[[coords[1]]], x[[coords[2]]], crs, coords)
+
   # na.fail = FALSE: a prediction frame routinely carries rows whose covariates
   # were missing, and dropping them is the caller's decision to make, not a
   # reason to refuse to build the object.
   sf::st_as_sf(x, coords = coords, crs = crs, remove = FALSE, na.fail = FALSE)
+}
+
+# Does the CRS the caller named match the numbers they handed over?
+#
+# `crs =` on a data frame is the one place in this package where a coordinate
+# system is ASSERTED rather than read, and a wrong assertion is not caught
+# anywhere downstream: `sf` attaches whatever it is told, every transform after
+# that is arithmetically valid, and the map draws. It is just a map of
+# somewhere else -- or, for degrees labelled as metres, a map of a study area
+# 140 metres across sitting off the coast of Africa.
+#
+# Only the certainly-wrong cases are errors. Nothing here can tell UTM 19N from
+# UTM 20N, and it does not try; what it catches is degrees and metres swapped,
+# which is the mistake that actually gets made.
+check_crs_plausible <- function(x, y, crs, coords) {
+  x <- x[is.finite(x)]
+  y <- y[is.finite(y)]
+  if (!length(x) || !length(y)) {
+    # Caught here rather than left to sf, which builds a geometry of empty
+    # points and then emits "no non-missing arguments to min; returning Inf"
+    # three times from inside st_bbox -- which says nothing about the data and
+    # names neither the column nor the fix.
+    stop("every row is missing a coordinate: `", coords[1], "` and `",
+         coords[2], "` are entirely NA, so there is nothing to draw.\n",
+         "  Check that `coords =` names the right columns.", call. = FALSE)
+  }
+
+  longlat <- isTRUE(sf::st_is_longlat(crs))
+  in_degrees <- max(abs(x)) <= 180 && max(abs(y)) <= 90
+
+  if (longlat && !in_degrees) {
+    stop("`crs` says these coordinates are longitude and latitude, but `",
+         coords[1], "` reaches ", signif(max(abs(x)), 6), " and `", coords[2],
+         "` reaches ", signif(max(abs(y)), 6),
+         ".
+  Longitude cannot pass 180 and latitude cannot pass 90, so ",
+         "these are projected coordinates -- probably metres.
+  Pass the ",
+         "EPSG code the model was fitted in instead, such as crs = 32619.",
+         call. = FALSE)
+  }
+
+  if (!longlat && in_degrees) {
+    # A warning rather than an error: a projected CRS in degree-sized units is
+    # not impossible, only very unlikely, and a study area 140 metres across is
+    # visible the moment anyone looks at the figure.
+    warning("`crs` says these coordinates are projected, but they all fall ",
+            "within +/-180 and +/-90, which is what longitude and latitude ",
+            "look like.
+  If they are lon/lat, pass crs = 4326: read as ",
+            "metres they describe an area a few hundred metres across, in ",
+            "the wrong place.", call. = FALSE)
+  }
+
+  invisible(NULL)
 }
 
 # The spellings coordinate columns actually turn up in, most specific first.

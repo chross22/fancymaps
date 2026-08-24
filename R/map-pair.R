@@ -94,6 +94,8 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
   right <- as_map_data(uncertainty_from %||% x, value = uncertainty, by = by,
                        coords = coords, crs = crs, label = labels[2])
 
+  check_same_cells(left, right, !is.null(uncertainty_from))
+
   crs <- display_crs(left, crs)
   left <- project_md(left, crs)
   right <- project_md(right, crs)
@@ -190,4 +192,32 @@ panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
   if (isTRUE(north)) p <- p + north_arrow(extent, base_size = base_size)
 
   p + ggplot2::labs(title = title) + theme
+}
+
+# The two panels of a pair are read cell by cell, so they have to BE the same
+# cells. When both come off one object they are, by construction; when
+# `uncertainty_from` names a second one, nothing has checked.
+#
+# Two different grids over the same water still draw -- both get projected to
+# the same CRS and both get the same extent -- and the figure looks entirely
+# normal. It just invites a comparison that cannot be made.
+check_same_cells <- function(left, right, separate) {
+  if (length(left$geometry) == length(right$geometry)) {
+    if (!separate) return(invisible(NULL))
+    a <- sf::st_bbox(sf::st_transform(left$geometry, 4326))
+    b <- sf::st_bbox(sf::st_transform(right$geometry, 4326))
+    if (max(abs(as.numeric(a) - as.numeric(b))) < 1e-6) {
+      return(invisible(NULL))
+    }
+    warning("`uncertainty_from` covers a different extent from `x`, though ",
+            "both have ", length(left$geometry), " features.\n  The panels ",
+            "are drawn to be compared cell by cell, and these may not be the ",
+            "same cells.", call. = FALSE)
+    return(invisible(NULL))
+  }
+
+  stop("the two panels have different numbers of features -- ",
+       length(left$geometry), " and ", length(right$geometry),
+       ".\n  A pair is read cell by cell, so both panels have to be the same ",
+       "cells.", call. = FALSE)
 }

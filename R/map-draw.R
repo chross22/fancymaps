@@ -43,7 +43,21 @@ assemble_map <- function(md, scales, crs, coastline = TRUE, region = NULL,
 # data, and letting each take its own is what stops them lining up.
 shared_extent <- function(mds, expand = 0.02) {
   boxes <- lapply(mds, function(md) sf::st_bbox(md$geometry))
+
+  # Every caller projects its layers before getting here, so this should never
+  # fire -- which is exactly why it is worth asserting. Taking the first box's
+  # CRS and silently treating the rest as if they shared it would produce an
+  # extent in one coordinate system and data in another, and the symptom is a
+  # blank panel rather than an error.
   crs <- sf::st_crs(boxes[[1]])
+  disagree <- !vapply(boxes, function(b) sf::st_crs(b) == crs, logical(1))
+  if (any(disagree)) {
+    stop("these layers are in ", sum(disagree) + 1, " different coordinate ",
+         "systems and one extent has to cover them all.
+  This is an ",
+         "internal error -- every layer should have been projected before ",
+         "reaching here.", call. = FALSE)
+  }
   padded_box(
     sf::st_bbox(
       c(xmin = min(vapply(boxes, function(b) b[["xmin"]], numeric(1))),

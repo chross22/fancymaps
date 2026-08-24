@@ -8,17 +8,8 @@
 
 scale_pair <- function(spec, name, kind, palette = "sequential",
                        midpoint = NULL, direction = 1) {
-  colours <- if (is.null(midpoint)) {
-    fancymap_palette(palette, 32)
-  } else {
-    fancymap_palette("diverging", 33)
-  }
-  # Which end of a ramp carries the weight is a claim about which end matters,
-  # and it is not derivable from the numbers. On an extrapolation surface the
-  # NEGATIVE values are the ones a reader has to see -- they are where the
-  # model is guessing -- and they are a small minority, so leaving them on the
-  # cool arm of a blue-to-orange ramp puts the alarm on the wrong side.
-  if (is.numeric(direction) && direction < 0) colours <- rev(colours)
+  colours <- ramp_colours(if (is.null(midpoint)) palette else "diverging",
+                          direction)
 
   args <- list(
     colours = colours,
@@ -74,4 +65,28 @@ diverging_rescaler <- function(midpoint) {
     if (!is.finite(reach) || reach <= 0) reach <- 1
     scales::rescale(x, to = to, from = midpoint + c(-reach, reach))
   }
+}
+
+# The interpolation stops for a ramp.
+#
+# One function, because both renderers have to use the same one. The colours
+# come out of `scales::gradient_n_pal()` in either case, and that interpolates
+# between whatever stops it is given -- so a ggplot2 scale built on 33 stops and
+# a leaflet layer built on 32 produce colours that differ in the last hex digit.
+# Invisible on screen and still wrong: the claim these two renderers make
+# together is that a cell is the SAME colour in both.
+#
+# Odd for the diverging ramp, so that one stop lands exactly on the centre and
+# the neutral colour is a colour in the palette rather than an interpolation
+# between the two nearest.
+ramp_colours <- function(palette, direction = 1) {
+  colours <- fancymap_palette(palette,
+                              if (identical(palette, "diverging")) 33 else 32)
+  # Which end of a ramp carries the weight is a claim about which end matters,
+  # and it is not derivable from the numbers. On an extrapolation surface the
+  # NEGATIVE values are the ones a reader has to see -- they are where the
+  # model is guessing -- and they are a small minority, so leaving them on the
+  # cool arm of a blue-to-orange ramp puts the alarm on the wrong side.
+  if (is.numeric(direction) && direction < 0) colours <- rev(colours)
+  colours
 }

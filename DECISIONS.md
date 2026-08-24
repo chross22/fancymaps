@@ -230,6 +230,100 @@ requirements note asks for and which is about cost.
 
 ---
 
+## Interactive maps, against the note's advice
+
+The requirements note lists interactive and web maps as a non-goal, because
+`leaflet` and `mapview` exist. That is right about the **rendering** and wrong
+about the **decisions**.
+
+Handing a grid straight to `leaflet` means deciding the scale again, by hand, at
+the call site -- and it gets decided differently, because
+`leaflet::colorNumeric()` defaults to linear over the full data range with no
+capping. The result is a static figure and an interactive one, of the same
+numbers, in different colours. A reader who has seen both has been told two
+things.
+
+So `leaflet_surface()`, `leaflet_probability()` and `leaflet_diverging()` are
+not a second mapping package. They are the same `as_map_data()`, the same
+`surface_scale()` / `diverging_scale()`, and the same palettes, rendered by
+`leaflet` instead of by `ggplot2`.
+
+**Measured.** Colours are compared cell for cell against the static map, at
+exact hex equality, in `test-leaflet.R`: 108/108 identical for the surface,
+the probability, and the diverging map in both ramp directions.
+
+That test caught the way this breaks. The first version built the leaflet ramp
+from 32 palette stops where `scale_fill_gradientn()` used 33, and the colours
+came out differing in the last hex digit -- `#E9DFD3` against `#E9DED2`.
+Indistinguishable on screen, and still a different colour for the same number,
+which is exactly the claim these functions exist to make. Both renderers now go
+through one `ramp_colours()`.
+
+The legend broke the same way and needed the same fix. On a linear scale the
+breaks are worked out here rather than taken from `ggplot2`, and `pretty()`
+stops below the cap -- so the static legend read `>= 0.879` and the interactive
+one stopped at `0.8` with no sign that anything had been capped.
+
+### What is deliberately not carried over
+
+* **The projection.** `leaflet` is Web Mercator and takes WGS84 inputs, so
+  `display_crs()` does not apply and everything is transformed to EPSG:4326.
+* **The coastline.** Land comes from the tile provider. Which means these, alone
+  in the package, **need the network at draw time** -- the reason the static
+  maps do not use tiles, and the reason this is a separate set of functions
+  rather than an argument to the existing ones.
+* **The north arrow.** Meaningless on a map you can pan but not rotate.
+
+Verified against the real `dsmfit` grid in a browser: 1,167 cells, tiles
+loading, legend reading `>= 0.879`, and all 1,167 popups bound with the value
+and the requested covariates. The click-to-open interaction could not be
+exercised through the sandboxed browser used here, so it is confirmed at the
+payload level rather than by a click.
+
+---
+
+## CRS agreement: what is checked, and what cannot be
+
+Everything drawn in one figure is transformed to one display CRS before any of
+it is drawn, so the layers agree **by construction** rather than by check. What
+needed adding was the places where a coordinate system is *asserted* rather than
+read.
+
+**`crs =` on a data frame.** The one place a caller states a coordinate system
+rather than the data carrying one, and a wrong statement was caught nowhere:
+`sf` attaches whatever it is told, every transform afterwards is arithmetically
+valid, and the map draws. It is just a map of somewhere else. Both nonsense
+directions were accepted silently before this:
+
+| given | declared | now |
+|---|---|---|
+| 400000, 4800000 | EPSG:4326 | error -- longitude cannot pass 180 |
+| -70, 43 | EPSG:32619 | warning -- read as metres this is 140 m across |
+
+An error for the first because it is certainly wrong; a warning for the second
+because a projected CRS in degree-sized units is unlikely rather than impossible.
+Neither can tell UTM 19N from UTM 20N, and neither tries -- what they catch is
+degrees and metres swapped, which is the mistake that actually gets made.
+
+**`shared_extent()`** now asserts its inputs agree. It should never fire, since
+every caller projects first, which is exactly why it is worth asserting: taking
+the first layer's CRS and treating the rest as if they shared it gives an extent
+in one system and data in another, and the symptom is a blank panel rather than
+an error.
+
+**`map_pair(uncertainty_from = )`.** A pair is read cell by cell, so the two
+panels have to be the same cells. Two different grids over the same water still
+draw -- both get projected, both get the same extent -- and the figure looks
+entirely normal while inviting a comparison that cannot be made. Different
+feature counts are now an error; the same count over a different extent is a
+warning.
+
+**An all-missing coordinate frame** now says so, rather than leaking
+`no non-missing arguments to min; returning Inf` three times from inside
+`st_bbox()`.
+
+---
+
 ## Not done yet
 
 * **A locator inset.** Asked for in the note, not built. It needs a second
@@ -241,8 +335,12 @@ requirements note asks for and which is about cost.
 * **Visual regression tests.** The convention is that every figure change is
   rendered and looked at. `vdiffr` would make that a test rather than a habit;
   it is not installed here, so it is not in `Suggests` yet.
-* **A vignette.** `scales` is referenced from the package documentation and does
-  not exist.
+* **A vignette.** The package documentation points at [surface_scale()] and
+  [diverging_scale()] for the scale reasoning rather than at a vignette, but a
+  worked one covering both renderers would be better than either.
+* **Interactive pairs and panels.** `leaflet_*()` covers the three single maps.
+  A pair is two synchronised widgets and a series is a layer control; both are
+  real work and neither is started.
 * **`rnaturalearthhires` is declared in `Suggests`** and is not on CRAN, so
   `R CMD check` needs `_R_CHECK_FORCE_SUGGESTS_=false` on a machine without it.
   Status with that set: **0 errors, 0 warnings, 0 notes.**

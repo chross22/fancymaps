@@ -190,3 +190,14 @@ test_that("hex_surface counts when given no value, and refuses polygons", {
 
   expect_error(hex_surface(example_grid(), "density"), "bins points")
 })
+
+test_that("a pair's capped panel says so on the panel", {
+  # A single map appends the cap note to its caption and map_panels() to the
+  # shared one, but a pair's panels resolve their scales separately -- and
+  # without this the capped panel said nothing at all.
+  g <- example_grid()
+  g$density[1] <- 1e6
+  suppressMessages(p <- map_pair(g, "density", "cv",
+                                 labels = c("density", "cv")))
+  expect_match(p[[1]]$labels$caption, "capped")
+})

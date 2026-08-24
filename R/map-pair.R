@@ -118,7 +118,7 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
                      title = titles[1] %||% NULL, base_size = base_size,
                      theme = panel_theme, scalebar = scalebar, north = north,
                      scalebar_position = scalebar_position,
-                     north_position = north_position)
+                     north_position = north_position, caption_note = TRUE)
 
   p_right <- panel_of(right, kind = uncertainty_kind, transform = transform,
                       limits = NULL, probs = probs, land = land,
@@ -130,7 +130,7 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
                       # The furniture goes on the left panel only: the extent
                       # is identical, so a second scale bar measures nothing
                       # new and a second north arrow points the same way.
-                      scalebar = FALSE, north = FALSE)
+                      scalebar = FALSE, north = FALSE, caption_note = TRUE)
 
   patchwork::wrap_plots(list(p_left, p_right), ncol = ncol) +
     patchwork::plot_annotation(
@@ -153,7 +153,8 @@ panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
                      crs, graticule, title, base_size, theme,
                      midpoint = NULL, direction = 1, scalebar = FALSE,
                      north = FALSE, scalebar_position = "bl",
-                     north_position = "tr", name = NULL, spec = NULL) {
+                     north_position = "tr", name = NULL, spec = NULL,
+                     caption_note = FALSE) {
   # A caller that has already settled the scale hands the WHOLE spec down,
   # rather than the transform and the limits for this panel to re-derive from.
   #
@@ -206,7 +207,17 @@ panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
                          base_size = base_size)
   }
 
-  p + ggplot2::labs(title = title) + theme
+  # The cap note, when this panel is asked to carry its own. A single map
+  # appends it to the figure caption and map_panels() to the shared one, but a
+  # pair's panels resolve their scales separately -- so without this a capped
+  # left panel said nothing, and a silent cap is the exact thing squishing
+  # instead of censoring was meant to prevent. Found drawing dsmfit's
+  # projection pair: the density panel capped at its 99th percentile and the
+  # figure did not mention it.
+  p + ggplot2::labs(
+    title = title,
+    caption = if (caption_note) squish_note(spec, md$label)
+  ) + theme
 }
 
 # The two panels of a pair are read cell by cell, so they have to BE the same

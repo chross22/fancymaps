@@ -5,3 +5,5 @@
 ^\.github$
 ^DECISIONS\.md$
 ^README\.Rmd$
+^_pkgdown\.yml$
+^pkgdown-site$

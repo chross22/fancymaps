@@ -1,5 +1,9 @@
 # fancymaps
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/chross22/fancymaps/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/chross22/fancymaps/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 Publication-ready maps for spatial model output.
 
 A model that predicts over space produces a map, and a map is not a heatmap with

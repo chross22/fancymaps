@@ -34,6 +34,12 @@
 # than against pixels.
 
 skip_on_cran()
+# Skipped on CI for the platform reason above: the baselines are macOS font
+# metrics, and every Linux or Windows runner would fail them on typography
+# rather than on regressions. They run wherever a human is -- which is where
+# the "render it and look" convention lives anyway. Regenerating the baselines
+# on one pinned CI image and dropping this skip is the upgrade path.
+skip_on_ci()
 skip_if_not_installed("vdiffr")
 
 # The coastline is pinned to the bundled fixture in every one of these, and it

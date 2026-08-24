@@ -484,5 +484,8 @@ missing work but a condition of the build:
 * **`rnaturalearthhires` is declared in `Suggests`** and is not on CRAN, so
   `R CMD check` needs `_R_CHECK_FORCE_SUGGESTS_=false` on a machine without it.
   Status with that set, vignette rebuilt: **0 errors, 0 warnings, 0 notes.**
-* **Snapshot baselines are platform-specific.** See "Visual regression" above.
-  CI should pin one image and regenerate on it once.
+* **Snapshot baselines are platform-specific**, so `test-visual.R` skips on CI
+  (`skip_on_ci()`) and the snapshots run wherever a human is -- which is where
+  the "render it and look" convention lives anyway. Regenerating the baselines
+  on one pinned CI image and dropping the skip is the upgrade path. See
+  "Visual regression" above.

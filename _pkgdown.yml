@@ -1,0 +1,78 @@
+# Served from camilleross.org/fancymaps/, not chross22.github.io: GitHub
+# applies the user site's custom domain to every project page on the account.
+# This must name where visitors actually land, or the canonical link, sitemap
+# and og:url all point at a hostname nobody uses and search engines see two of
+# each page. (Copied from fancyfx, where this was learned.)
+url: https://camilleross.org/fancymaps/
+
+# NOT docs/. These packages keep hand-written design notes in docs/, tracked in
+# git, and a pkgdown build would erase them. pkgdown refuses outright when it
+# finds a docs/ it did not create; this names a directory that is unambiguously
+# generated.
+destination: pkgdown-site
+
+template:
+  bootstrap: 5
+  light-switch: true
+
+reference:
+- title: The maps
+  desc: >
+    One verb per question a map answers. Each resolves land, projection and a
+    colour scale chosen for the quantity, and says so in the figure when it
+    had to decide something.
+  contents:
+  - map_surface
+  - map_probability
+  - map_diverging
+  - map_pair
+  - map_panels
+  - map_effort
+
+- title: Interactive
+  desc: >
+    The same maps as leaflet widgets, built from the same scale objects so a
+    cell is the same colour in both renderers. A pair and a series become a
+    layer switch on one map rather than two maps.
+  contents:
+  - leaflet_surface
+  - leaflet_probability
+  - leaflet_diverging
+  - leaflet_pair
+  - leaflet_panels
+
+- title: What the maps are built from
+  desc: >
+    The data contract, the coastline, and the two coordinate-system questions
+    -- what a map is drawn in and what areas are measured in -- answered
+    separately on purpose.
+  contents:
+  - as_map_data
+  - coastline
+  - coastline_fixture
+  - display_crs
+  - equal_area_crs
+  - area_km2
+
+- title: Scales
+  desc: >
+    How a surface should be coloured, decided by stated rules and reported
+    when a rule fires. See vignette("scales") for the argument.
+  contents:
+  - surface_scale
+  - diverging_scale
+  - fancymap_palette
+
+- title: Furniture and style
+  desc: >
+    Scale bar, north arrow, locator inset, and the theme shared with fancyfx.
+  contents:
+  - scale_bar
+  - north_arrow
+  - locator_inset
+  - theme_fancymap
+  - theme_fancymap_panel
+
+- title: Example data
+  contents:
+  - example_grid

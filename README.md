@@ -167,6 +167,17 @@ belong beside the ROC curves — and what they produce is a common thing to hand
 to `map_diverging()`. `fancyfx::hex_bin()` is reused directly by `map_effort()`
 rather than reimplemented.
 
+## Development
+
+```r
+devtools::test()                 # includes 14 vdiffr snapshots
+testthat::snapshot_review()      # look at any figure that changed
+```
+
+Snapshot baselines are platform-specific — svglite records text widths from
+system font metrics — so a first run elsewhere reports typography diffs rather
+than regressions. See `DECISIONS.md`.
+
 ## See also
 
 `DECISIONS.md` records the choices, the measurements behind them, and the bugs

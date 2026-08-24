@@ -44,7 +44,8 @@ Suggests:
     rnaturalearthdata,
     rnaturalearthhires,
     terra,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    vdiffr
 URL: https://github.com/chross22/fancymaps
 BugReports: https://github.com/chross22/fancymaps/issues
 Additional_repositories: https://ropensci.r-universe.dev

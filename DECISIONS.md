@@ -392,11 +392,44 @@ warning.
 
 ---
 
+## Visual regression
+
+Every defect this package was written to fix, and four of the five found while
+writing it, was a bug in what the figure *looked like*. All of them passed their
+unit tests. `test-visual.R` holds 14 `vdiffr` snapshots so that class of bug has
+something automatic behind the habit of looking at a PNG.
+
+**Measured sensitivity.** Perturbing one stop of the diverging palette by 4/255
+-- `#E8E8E8` to `#E4E4E4`, invisible on screen -- failed exactly the four
+snapshots that use that ramp (`diverging`, `diverging-reversed`,
+`diverging-off-centre`, `pair`) and none of the other ten. Reverting the
+`map_panels()` shared-spec fix failed the `panels` snapshot alongside the unit
+test that already covered it.
+
+**The coastline is pinned to the bundled fixture in every snapshot**, and that
+is not a detail. `example_grid()` is 194 km across, just under the 200 km where
+`coastline()` starts asking for a 1:10m shoreline -- so left to resolve itself
+it draws Natural Earth large where `rnaturalearthhires` is installed and medium
+where it is not. The snapshots would then encode which optional packages the
+machine happened to have rather than what this package does.
+
+**They are platform-specific, and that is a real limitation.** svglite writes
+each text element with a `textLength` measured from system font metrics, so a
+first run on a machine with different fonts reports diffs that are typography
+rather than regressions. The baselines here are macOS, R 4.6.1, vdiffr 1.0.9,
+svglite 2.2.2. CI should pin one image and regenerate on it once.
+
+**What they are not** is a check that a figure is correct. A snapshot of a
+broken map is a stable snapshot of a broken map -- as the `panels` baseline
+would have been, had it been taken before the two-legend bug was found. They
+tell the difference between a change and an accident; the properties that have
+to hold are still asserted against numbers, in `test-maps.R` and its
+neighbours.
+
+---
+
 ## Not done yet
 
-* **Visual regression tests.** The convention is that every figure change is
-  rendered and looked at. `vdiffr` would make that a test rather than a habit;
-  it is not installed here, so it is not in `Suggests` yet.
 * **A vignette.** The package documentation points at [surface_scale()] and
   [diverging_scale()] for the scale reasoning rather than at a vignette, but a
   worked one covering both renderers would be better than either.

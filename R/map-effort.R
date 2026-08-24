@@ -226,3 +226,74 @@ hex_polygons <- function(x, y, cellsize, crs) {
     crs = crs
   )
 }
+
+#' Bin point values into a hexagonal surface
+#'
+#' Points with a value each in, one `sf` polygon per occupied hexagon out, with
+#' the values summarised per bin. The binned form of a quantity, ready to hand
+#' to whichever map verb suits it.
+#'
+#' @param x Points: an `sf` object, or a data frame with coordinate columns.
+#' @param value The value to summarise: a column name or a vector, as in
+#'   [as_map_data()]. `NULL` counts points instead.
+#' @param bins,fun How many hexagons across the extent, and how the values in
+#'   each are summarised -- any `fun` [fancyfx::hex_bin()] takes.
+#' @param coords,crs As in [as_map_data()].
+#'
+#' @details
+#' [map_effort()] bins for you, and always onto a sequential scale, which is
+#' right for the question it asks -- how much, where. This is the way out when
+#' the binned quantity needs a different scale. The first customer is model
+#' residuals: binned because 8,000 overlapping segments cannot show a cluster,
+#' and then **diverging**, centred on the survey's own mean residual, because
+#' deviance residuals do not average zero:
+#'
+#' ```r
+#' hex <- hex_surface(segments, "resid", fun = "mean")
+#' map_diverging(hex, "value", midpoint = mean(hex$value))
+#' ```
+#'
+#' Binning happens in the display projection, not in lon/lat, for the reason
+#' [map_effort()]'s binning does: hexagons binned in degrees are not hexagons
+#' on a map, by the same factor that makes a degree of longitude 74 km in the
+#' Gulf of Maine and 111 at the equator.
+#'
+#' @return An `sf` data frame with one row per occupied hexagon: `value`, the
+#'   summarised quantity; `n`, how many points fell in the bin; and the
+#'   hexagon's polygon.
+#'
+#' @seealso [map_effort()] for the count-where-the-effort-was case,
+#'   [map_diverging()] for drawing the result on a centred scale.
+#'
+#' @examples
+#' pts <- sf::st_as_sf(
+#'   data.frame(lon = runif(500, -70, -69), lat = runif(500, 43, 44),
+#'              resid = rnorm(500, mean = 0.8)),
+#'   coords = c("lon", "lat"), crs = 4326)
+#'
+#' hex <- hex_surface(pts, "resid", bins = 12, fun = "mean")
+#' map_diverging(hex, "value", midpoint = mean(hex$value),
+#'               label = "mean residual")
+#'
+#' @export
+hex_surface <- function(x, value = NULL, bins = 30, fun = "mean",
+                        coords = NULL, crs = NULL) {
+  label <- value_label(rlang::enquo(value), value)
+  md <- as_map_data(x, value = value, coords = coords, crs = crs,
+                    label = label)
+  if (!identical(md$kind, "point")) {
+    stop("hex_surface() bins points, and this is ", md$kind, " geometry.\n",
+         "  For a quantity already on polygons, hand it to a map verb ",
+         "directly.", call. = FALSE)
+  }
+  if (is.null(md$value)) fun <- "count"
+
+  md <- project_md(md, display_crs(md, crs = NULL))
+  binned <- bin_points(md, bins = bins, fun = fun)
+
+  sf::st_sf(
+    value = binned$value,
+    n = binned$data$.n,
+    geometry = binned$geometry
+  )
+}

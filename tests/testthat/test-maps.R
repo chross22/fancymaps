@@ -161,3 +161,32 @@ test_that("a map with no land drawn is captioned to say so", {
     suppressMessages(map_surface(g, "density", coastline = coastline_fixture()[0, ])))
   expect_match(open_water$labels$caption, "No land")
 })
+
+test_that("hex_surface bins point values into polygons", {
+  set.seed(4)
+  pts <- sf::st_as_sf(
+    data.frame(lon = runif(400, -70, -69), lat = runif(400, 43, 44),
+               resid = rnorm(400, mean = 0.8)),
+    coords = c("lon", "lat"), crs = 4326)
+
+  hex <- hex_surface(pts, "resid", bins = 10, fun = "mean")
+  expect_s3_class(hex, "sf")
+  expect_true(all(c("value", "n") %in% names(hex)))
+  expect_true(all(sf::st_geometry_type(hex) == "POLYGON"))
+  expect_equal(sum(hex$n), 400)
+
+  # and the point of it: the binned surface goes straight to a centred scale
+  p <- map_diverging(hex, "value", midpoint = mean(hex$value),
+                     coastline = FALSE)
+  expect_silent(ggplot2::ggplot_build(p))
+})
+
+test_that("hex_surface counts when given no value, and refuses polygons", {
+  pts <- sf::st_as_sf(
+    data.frame(lon = runif(50, -70, -69), lat = runif(50, 43, 44)),
+    coords = c("lon", "lat"), crs = 4326)
+  hex <- hex_surface(pts, bins = 8)
+  expect_equal(sum(hex$value), 50)
+
+  expect_error(hex_surface(example_grid(), "density"), "bins points")
+})

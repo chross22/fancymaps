@@ -28,6 +28,7 @@ reference:
   - map_pair
   - map_panels
   - map_effort
+  - hex_surface
 
 - title: Interactive
   desc: >

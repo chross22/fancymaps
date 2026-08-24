@@ -41,6 +41,12 @@ package's job, and this one draws what it is given.
   Survey effort and detections: lines, points, and binning when there
   are too many of them to draw.
 
+- [`hex_surface()`](https://camilleross.org/fancymaps/reference/hex_surface.md):
+
+  Binned values as polygons, for a quantity that bins like effort but
+  needs a different scale – residuals, which diverge around their own
+  mean.
+
 ## What it accepts
 
 Not one blessed type.

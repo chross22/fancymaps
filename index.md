@@ -1,5 +1,8 @@
 # fancymaps
 
+Documentation:
+[camilleross.org/fancymaps](https://camilleross.org/fancymaps/)
+
 Publication-ready maps for spatial model output.
 
 A model that predicts over space produces a map, and a map is not a
@@ -59,6 +62,11 @@ map_panels(grid, cbind(spring = grid$density, summer = grid$density * 2.5))
 
 # survey effort, binned when there is too much of it to draw
 map_effort(points = sightings, size = "group_size")
+
+# binned values as polygons, for whichever scale the quantity needs --
+# residuals, say, which bin like effort but diverge around their own mean
+hex <- hex_surface(segments, "resid", fun = "mean")
+map_diverging(hex, "value", midpoint = mean(hex$value))
 ```
 
 ## Interactive
@@ -201,6 +209,20 @@ common thing to hand to
 is reused directly by
 [`map_effort()`](https://camilleross.org/fancymaps/reference/map_effort.md)
 rather than reimplemented.
+
+## In use
+
+[`dsmfit`](https://github.com/chross22/dsmfit), the distance-sampling
+pipeline this package was specified against, now draws its maps through
+it: the projection-and-extrapolation pair, the binned residual map, and
+the spatial partial effect. Every figure that repository’s requirements
+note listed as hand-drawn and wrong in a named way is drawn by a tested
+function here instead — and converting it caught two defects in this
+package that no test had:
+[`hex_surface()`](https://camilleross.org/fancymaps/reference/hex_surface.md)
+did not exist, and a capped panel of
+[`map_pair()`](https://camilleross.org/fancymaps/reference/map_pair.md)
+said nothing. `DECISIONS.md` records both.
 
 ## Documentation
 

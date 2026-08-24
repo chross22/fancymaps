@@ -64,6 +64,7 @@
 </h1></div>
 <!-- badges: start -->
 
+<p>Documentation: <a href="https://camilleross.org/fancymaps/">camilleross.org/fancymaps</a></p>
 <p>Publication-ready maps for spatial model output.</p>
 <p>A model that predicts over space produces a map, and a map is not a heatmap with coordinates. It needs land, so a reader can tell one bay from another and check that the study area is the water they think it is. It needs a stated projection, so that area means area. It needs a colour scale chosen for the quantity being drawn rather than whichever default fell out. And when a value is shown beside its uncertainty, the two need to be one figure rather than two that happen to be adjacent.</p>
 <p><code>fancymaps</code> draws those maps. It does not compute what goes on them — density, occupancy, uncertainty and extrapolation are the fitting package’s job.</p>
@@ -106,7 +107,12 @@
 <span><span class="fu"><a href="reference/map_panels.html">map_panels</a></span><span class="op">(</span><span class="va">grid</span>, <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>spring <span class="op">=</span> <span class="va">grid</span><span class="op">$</span><span class="va">density</span>, summer <span class="op">=</span> <span class="va">grid</span><span class="op">$</span><span class="va">density</span> <span class="op">*</span> <span class="fl">2.5</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># survey effort, binned when there is too much of it to draw</span></span>
-<span><span class="fu"><a href="reference/map_effort.html">map_effort</a></span><span class="op">(</span>points <span class="op">=</span> <span class="va">sightings</span>, size <span class="op">=</span> <span class="st">"group_size"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/map_effort.html">map_effort</a></span><span class="op">(</span>points <span class="op">=</span> <span class="va">sightings</span>, size <span class="op">=</span> <span class="st">"group_size"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># binned values as polygons, for whichever scale the quantity needs --</span></span>
+<span><span class="co"># residuals, say, which bin like effort but diverge around their own mean</span></span>
+<span><span class="va">hex</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/hex_surface.html">hex_surface</a></span><span class="op">(</span><span class="va">segments</span>, <span class="st">"resid"</span>, fun <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/map_diverging.html">map_diverging</a></span><span class="op">(</span><span class="va">hex</span>, <span class="st">"value"</span>, midpoint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">hex</span><span class="op">$</span><span class="va">value</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="interactive">Interactive<a class="anchor" aria-label="anchor" href="#interactive"></a>
@@ -163,6 +169,11 @@
 <p>The two share a visual identity by construction rather than by agreement. <code><a href="reference/theme_fancymap.html">theme_fancymap()</a></code> is <code><a href="https://camilleross.org/fancyfx/reference/theme_fancyfx.html" class="external-link">fancyfx::theme_fancyfx()</a></code> with the axis furniture removed, so the fonts, the sizes and the legend styling come from one place and change in one place.</p>
 <p>The dependency runs one way: <code>fancymaps</code> imports <code>fancyfx</code>, and <code>fancyfx</code> knows nothing about <code>fancymaps</code>. That is the right direction — the maps package needs the effects package’s identity, not the other way round — and it means map rendering’s hard dependency on <code>sf</code> never reaches someone who installed a package to plot a partial effect.</p>
 <p>Some things stay over there on purpose. <code><a href="https://camilleross.org/fancyfx/reference/mess.html" class="external-link">fancyfx::mess()</a></code> and <code>plotExtrapolation()</code> are statements about a <em>model</em>, not about a map, so they belong beside the ROC curves — and what they produce is a common thing to hand to <code><a href="reference/map_diverging.html">map_diverging()</a></code>. <code><a href="https://camilleross.org/fancyfx/reference/hex_bin.html" class="external-link">fancyfx::hex_bin()</a></code> is reused directly by <code><a href="reference/map_effort.html">map_effort()</a></code> rather than reimplemented.</p>
+</div>
+<div class="section level2">
+<h2 id="in-use">In use<a class="anchor" aria-label="anchor" href="#in-use"></a>
+</h2>
+<p><a href="https://github.com/chross22/dsmfit" class="external-link"><code>dsmfit</code></a>, the distance-sampling pipeline this package was specified against, now draws its maps through it: the projection-and-extrapolation pair, the binned residual map, and the spatial partial effect. Every figure that repository’s requirements note listed as hand-drawn and wrong in a named way is drawn by a tested function here instead — and converting it caught two defects in this package that no test had: <code><a href="reference/hex_surface.html">hex_surface()</a></code> did not exist, and a capped panel of <code><a href="reference/map_pair.html">map_pair()</a></code> said nothing. <code>DECISIONS.md</code> records both.</p>
 </div>
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>

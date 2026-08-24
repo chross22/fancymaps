@@ -563,6 +563,47 @@ the properties that have to hold are still asserted against numbers, in
 
 ------------------------------------------------------------------------
 
+## The first customer arrived
+
+`dsmfit` now draws its three hand-rolled maps through this package – the
+projection-and-MESS pair via
+[`map_pair()`](https://camilleross.org/fancymaps/reference/map_pair.md),
+the binned residual map via
+[`hex_surface()`](https://camilleross.org/fancymaps/reference/hex_surface.md) +
+[`map_diverging()`](https://camilleross.org/fancymaps/reference/map_diverging.md),
+and the spatial partial effect via
+[`map_diverging()`](https://camilleross.org/fancymaps/reference/map_diverging.md)
+on a raster. Its `config/versions.yml` pins this package by commit
+alongside the other layer packages.
+
+Integration is a test nothing else is, and it found two defects here
+that 249 tests and 14 snapshots had not:
+
+- **[`hex_surface()`](https://camilleross.org/fancymaps/reference/hex_surface.md)
+  did not exist.** Requirement 4 of the requirements note – residuals in
+  space, binned – was only reachable through
+  [`map_effort()`](https://camilleross.org/fancymaps/reference/map_effort.md),
+  which bins onto a sequential scale. Binned residuals need a diverging
+  one centred on their own mean. The binning existed, exported behind
+  the wrong verb.
+- **A capped panel of
+  [`map_pair()`](https://camilleross.org/fancymaps/reference/map_pair.md)
+  said nothing** (bug 5 above). Both single maps and
+  [`map_panels()`](https://camilleross.org/fancymaps/reference/map_panels.md)
+  carried the cap note; the pair’s panels resolve their scales
+  separately and neither path ran. Found on the first real figure drawn.
+
+Two conversion lessons that belong to callers rather than to this
+package, recorded in `dsmfit`’s comments and worth repeating: adding a
+`geom_sf` layer to a finished map **replaces its `coord_sf`** and
+silently discards the fixed extent – annotate with `geom_point` in the
+display CRS’s own units instead. And a pipeline whose model frame
+carries kilometres has to multiply back to metres before anything here
+sees it; nothing can catch that, because 400 is a plausible number in
+either unit.
+
+------------------------------------------------------------------------
+
 ## Standing caveats
 
 Every requirement in `dsmfit`’s `docs/02-mapping-package.md` is

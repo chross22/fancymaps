@@ -222,6 +222,16 @@
 <p><strong>What they are not</strong> is a check that a figure is correct. A snapshot of a broken map is a stable snapshot of a broken map – as the <code>panels</code> baseline would have been, had it been taken before the two-legend bug was found. They tell the difference between a change and an accident; the properties that have to hold are still asserted against numbers, in <code>test-maps.R</code> and its neighbours.</p>
 <hr></div>
 <div class="section level2">
+<h2 id="the-first-customer-arrived">The first customer arrived<a class="anchor" aria-label="anchor" href="#the-first-customer-arrived"></a></h2>
+<p><code>dsmfit</code> now draws its three hand-rolled maps through this package – the projection-and-MESS pair via <code><a href="reference/map_pair.html">map_pair()</a></code>, the binned residual map via <code><a href="reference/hex_surface.html">hex_surface()</a></code> + <code><a href="reference/map_diverging.html">map_diverging()</a></code>, and the spatial partial effect via <code><a href="reference/map_diverging.html">map_diverging()</a></code> on a raster. Its <code>config/versions.yml</code> pins this package by commit alongside the other layer packages.</p>
+<p>Integration is a test nothing else is, and it found two defects here that 249 tests and 14 snapshots had not:</p>
+<ul><li>
+<strong><code><a href="reference/hex_surface.html">hex_surface()</a></code> did not exist.</strong> Requirement 4 of the requirements note – residuals in space, binned – was only reachable through <code><a href="reference/map_effort.html">map_effort()</a></code>, which bins onto a sequential scale. Binned residuals need a diverging one centred on their own mean. The binning existed, exported behind the wrong verb.</li>
+<li>
+<strong>A capped panel of <code><a href="reference/map_pair.html">map_pair()</a></code> said nothing</strong> (bug 5 above). Both single maps and <code><a href="reference/map_panels.html">map_panels()</a></code> carried the cap note; the pair’s panels resolve their scales separately and neither path ran. Found on the first real figure drawn.</li>
+</ul><p>Two conversion lessons that belong to callers rather than to this package, recorded in <code>dsmfit</code>’s comments and worth repeating: adding a <code>geom_sf</code> layer to a finished map <strong>replaces its <code>coord_sf</code></strong> and silently discards the fixed extent – annotate with <code>geom_point</code> in the display CRS’s own units instead. And a pipeline whose model frame carries kilometres has to multiply back to metres before anything here sees it; nothing can catch that, because 400 is a plausible number in either unit.</p>
+<hr></div>
+<div class="section level2">
 <h2 id="standing-caveats">Standing caveats<a class="anchor" aria-label="anchor" href="#standing-caveats"></a></h2>
 <p>Every requirement in <code>dsmfit</code>’s <code>docs/02-mapping-package.md</code> is implemented, including the three it lists as non-goals and which were later asked for – interactive maps, a locator inset, and furniture placement. What is left is not missing work but a condition of the build:</p>
 <ul><li>

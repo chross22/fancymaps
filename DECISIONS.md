@@ -202,10 +202,64 @@ a PNG. Four more were, here.
    long with six labels stacked on each other. A colourbar is five keys long, so
    the numbers in the theme are a fifth of what gets drawn.
 
-4. **The north arrow's label clipped.** Drawn above the arrow, the reserved
+4. **The locator inset's coastline as vertical bands.** `assemble_map()` passed
+   the map's own CRS down to the inset, and an inset is by definition much
+   wider than its map: EPSG:32619 is honest over the 300 km Gulf of Maine grid
+   and not over the 2,400 km inset around it, most of which is many UTM zones
+   from the central meridian. It renders as vertical strips of land. The inset
+   now picks its own equal-area projection centred on the study area, which has
+   no zone to leave -- the same fact `display_crs()` cites for not choosing a
+   UTM zone automatically, met from the other direction.
+
+   Worth recording how long this took to pin down, because the shape of the
+   mistake is general. Two plausible fixes were tried and *appeared* to work:
+   squaring the inset extent against its rectangle, and clearing the grob's
+   `respect` flag. Both were tested on figures that differed in more than one
+   way from the broken one, so each looked confirmed and neither was. The thing
+   that settled it was a 2x2 of projection against `respect` on one otherwise
+   identical figure: correct in both LAEA cells, banded in both UTM cells.
+   `respect` was irrelevant and is not in the code. Change one thing at a time.
+
+5. **The north arrow's label clipped.** Drawn above the arrow, the reserved
    height had to cover a glyph in map units plus a text line in points, and the
    `N` pushed past the top of the panel at some figure sizes and not others. The
    label now goes below the arrow.
+
+---
+
+## The locator inset
+
+`inset = TRUE` on any of the single-map verbs. Off by default, unlike the scale
+bar and the north arrow, because an inset sits over a corner of the data rather
+than in a margin -- so it is furniture that costs something.
+
+**How wide is a decision, not a setting.** A fixed multiple does not work: eight
+times the Gulf of Maine is most of the northeast seaboard and orients anyone,
+while eight times a 32 km hex grid at the mouth of the Bay of Fundy is 260 km of
+water and orients nobody. So `zoom` is a starting point and the extent doubles
+until land appears, capped at `max_zoom`. If nothing is found by then the inset
+is dropped rather than drawn empty -- an empty inset looks like a rendering
+failure and still takes the corner.
+
+That rule is what makes the inset earn its place on the `dynoccfit` map, whose
+main panel is captioned "No land falls inside this extent" and is entirely
+truthful about having nothing a reader can navigate by.
+
+**Its own projection**, not the map's -- see the bug below.
+
+**The marker is not always to scale.** A 32 km box on a 2,400 km inset is
+thinner than the line drawing it, so below 6% of the inset's width it becomes a
+fixed-size box on the same centre. That is a marker, not a measurement, and it
+is why the inset carries no scale bar: it answers *where*, and the main panel's
+scale bar answers *how big*.
+
+**Still a plain `ggplot`.** Drawn with `annotation_custom()` over a grob rather
+than `patchwork::inset_element()`, so a verb does not return a `ggplot` most of
+the time and a `patchwork` when one argument is set -- which would break every
+downstream `+` a caller had written.
+
+Costs about 0.15 s: 0.68 s for the Gulf of Maine surface with an inset against
+0.53 s without.
 
 ---
 
@@ -326,9 +380,6 @@ warning.
 
 ## Not done yet
 
-* **A locator inset.** Asked for in the note, not built. It needs a second
-  extent and a second coastline resolution, and it is the one piece of furniture
-  that changes the figure's layout rather than sitting inside the panel.
 * **Furniture placement arguments.** `scale_bar()` and `north_arrow()` take a
   `position`, but the map verbs do not pass one through, so the corner is fixed.
   On the `dsmfit` effort map the arrow lands over Nova Scotia.

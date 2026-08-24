@@ -26,6 +26,15 @@
 #'   coastline -- is appended to it.
 #' @param scalebar,north Whether to draw the furniture. See [scale_bar()] and
 #'   [north_arrow()].
+#' @param inset Whether to draw a locator inset -- a small wider map with this
+#'   figure's extent marked on it. `FALSE` by default, unlike the scale bar and
+#'   north arrow, because an inset sits over a corner of the data rather than in
+#'   a margin. `TRUE` uses the same coastline source as the map; a path or an
+#'   `sf` object gives the inset its own.
+#' @param inset_position,inset_size,inset_zoom Which corner the inset sits in,
+#'   how much of the panel width it takes, and how many times wider than the map
+#'   it starts. See [locator_inset()] -- `inset_zoom` is a starting point, not a
+#'   setting, because an inset showing nothing but water orients nobody.
 #' @param graticule Whether to label coordinates. Off by default; see
 #'   [theme_fancymap()].
 #' @param base_size Base font size in points.
@@ -67,7 +76,9 @@ map_surface <- function(x, value = NULL, by = NULL, coords = NULL, crs = NULL,
                         label = NULL, coastline = TRUE, region = NULL,
                         transform = "auto", limits = NULL, probs = c(0, 0.99),
                         title = NULL, subtitle = NULL, caption = NULL,
-                        scalebar = TRUE, north = TRUE, graticule = FALSE,
+                        scalebar = TRUE, north = TRUE, inset = FALSE,
+                        inset_position = "br", inset_size = 0.3,
+                        inset_zoom = 8, graticule = FALSE,
                         base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
@@ -85,7 +96,9 @@ map_surface <- function(x, value = NULL, by = NULL, coords = NULL, crs = NULL,
     crs = crs, coastline = coastline, region = region, graticule = graticule,
     title = title, subtitle = subtitle, caption = caption,
     notes = list(squish_note(spec, md$label)),
-    scalebar = scalebar, north = north, base_size = base_size, theme = theme,
+    scalebar = scalebar, north = north, inset = inset,
+    inset_position = inset_position, inset_size = inset_size,
+    inset_zoom = inset_zoom, base_size = base_size, theme = theme,
     expand = expand
   )
 }
@@ -133,7 +146,9 @@ map_probability <- function(x, value = NULL, by = NULL, coords = NULL,
                             crs = NULL, label = NULL, coastline = TRUE,
                             region = NULL, limits = c(0, 1),
                             title = NULL, subtitle = NULL, caption = NULL,
-                            scalebar = TRUE, north = TRUE, graticule = FALSE,
+                            scalebar = TRUE, north = TRUE, inset = FALSE,
+                            inset_position = "br", inset_size = 0.3,
+                            inset_zoom = 8, graticule = FALSE,
                             base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
@@ -162,7 +177,9 @@ map_probability <- function(x, value = NULL, by = NULL, coords = NULL,
       paste0(outside, " cell(s) fall outside [", limits[1], ", ", limits[2],
              "] and are drawn at the ends.")
     }),
-    scalebar = scalebar, north = north, base_size = base_size, theme = theme,
+    scalebar = scalebar, north = north, inset = inset,
+    inset_position = inset_position, inset_size = inset_size,
+    inset_zoom = inset_zoom, base_size = base_size, theme = theme,
     expand = expand
   )
 }
@@ -213,7 +230,9 @@ map_diverging <- function(x, value = NULL, midpoint, by = NULL, coords = NULL,
                           region = NULL, limits = NULL, probs = c(0.01, 0.99),
                           direction = 1,
                           title = NULL, subtitle = NULL, caption = NULL,
-                          scalebar = TRUE, north = TRUE, graticule = FALSE,
+                          scalebar = TRUE, north = TRUE, inset = FALSE,
+                          inset_position = "br", inset_size = 0.3,
+                          inset_zoom = 8, graticule = FALSE,
                           base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
@@ -233,7 +252,9 @@ map_diverging <- function(x, value = NULL, midpoint, by = NULL, coords = NULL,
     graticule = graticule, title = title, subtitle = subtitle,
     caption = caption,
     notes = list(squish_note(spec, md$label)),
-    scalebar = scalebar, north = north, base_size = base_size, theme = theme,
+    scalebar = scalebar, north = north, inset = inset,
+    inset_position = inset_position, inset_size = inset_size,
+    inset_zoom = inset_zoom, base_size = base_size, theme = theme,
     expand = expand
   )
 }

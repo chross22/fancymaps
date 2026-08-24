@@ -21,6 +21,10 @@ map_surface(
   caption = NULL,
   scalebar = TRUE,
   north = TRUE,
+  inset = FALSE,
+  inset_position = "br",
+  inset_size = 0.3,
+  inset_zoom = 8,
   graticule = FALSE,
   base_size = 12,
   theme = NULL,
@@ -59,6 +63,17 @@ coastline -- is appended to it.}
 
 \item{scalebar, north}{Whether to draw the furniture. See \code{\link[=scale_bar]{scale_bar()}} and
 \code{\link[=north_arrow]{north_arrow()}}.}
+
+\item{inset}{Whether to draw a locator inset -- a small wider map with this
+figure's extent marked on it. \code{FALSE} by default, unlike the scale bar and
+north arrow, because an inset sits over a corner of the data rather than in
+a margin. \code{TRUE} uses the same coastline source as the map; a path or an
+\code{sf} object gives the inset its own.}
+
+\item{inset_position, inset_size, inset_zoom}{Which corner the inset sits in,
+how much of the panel width it takes, and how many times wider than the map
+it starts. See \code{\link[=locator_inset]{locator_inset()}} -- \code{inset_zoom} is a starting point, not a
+setting, because an inset showing nothing but water orients nobody.}
 
 \item{graticule}{Whether to label coordinates. Off by default; see
 \code{\link[=theme_fancymap]{theme_fancymap()}}.}

@@ -8,8 +8,9 @@
 assemble_map <- function(md, scales, crs, coastline = TRUE, region = NULL,
                          graticule = FALSE, title = NULL, subtitle = NULL,
                          caption = NULL, notes = list(), scalebar = TRUE,
-                         north = TRUE, base_size = 12, theme = NULL,
-                         expand = 0.02, extent = NULL) {
+                         north = TRUE, inset = FALSE, inset_position = "br",
+                         inset_size = 0.3, inset_zoom = 8, base_size = 12,
+                         theme = NULL, expand = 0.02, extent = NULL) {
   md <- project_md(md, crs)
   box <- extent %||% map_extent(md, expand)
 
@@ -26,6 +27,23 @@ assemble_map <- function(md, scales, crs, coastline = TRUE, region = NULL,
 
   if (isTRUE(scalebar)) p <- p + scale_bar(box, base_size = base_size)
   if (isTRUE(north)) p <- p + north_arrow(box, base_size = base_size)
+  if (!isFALSE(inset)) {
+    # The inset resolves its own coastline, at its own width and so at its own
+    # resolution -- a 1:10m shoreline is wasted on a map of the Gulf of Maine
+    # drawn two centimetres across, and `coastline()` already knows that.
+    #
+    # `crs` is deliberately NOT passed. The inset picks its own -- an
+    # equal-area projection centred on the study area -- because it is many
+    # times wider than the map, and the projection that was honest over 300 km
+    # need not be over 2,400. Handing it EPSG:32619 draws the northeast
+    # seaboard as vertical bands of land, since most of that extent is many UTM
+    # zones from the central meridian. Same fact `display_crs()` cites for not
+    # choosing a zone automatically, met from the other direction.
+    p <- p + inset_layer(
+      locator_inset(box, zoom = inset_zoom,
+                    coastline = if (isTRUE(inset)) coastline else inset),
+      box, position = inset_position, size = inset_size)
+  }
 
   p +
     ggplot2::labs(

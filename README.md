@@ -44,6 +44,9 @@ map_pair(grid, "density", "mess",
          uncertainty_kind = "diverging", uncertainty_direction = -1,
          labels = c("animals per km2", "MESS"))
 
+# with a locator inset, for saying where in the world this is
+map_surface(grid, "density", inset = TRUE)
+
 # a series, on one shared scale
 map_panels(grid, cbind(spring = grid$density, summer = grid$density * 2.5))
 

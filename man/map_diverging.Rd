@@ -24,7 +24,8 @@ map_diverging(
   north = TRUE,
   graticule = FALSE,
   base_size = 12,
-  theme = NULL
+  theme = NULL,
+  expand = 0.02
 )
 }
 \arguments{
@@ -72,6 +73,11 @@ coastline -- is appended to it.}
 \item{base_size}{Base font size in points.}
 
 \item{theme}{A theme to use instead of \code{\link[=theme_fancymap]{theme_fancymap()}}.}
+
+\item{expand}{How much margin to leave around the data, as a fraction of its
+own extent. The default is a thin margin. Widen it when the data does not
+reach anything a reader can orient by -- a small grid in open water shows
+no coastline at all until the panel is wide enough to include one.}
 }
 \value{
 A \pkg{ggplot2} object.

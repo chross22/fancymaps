@@ -25,7 +25,8 @@ map_effort(
   graticule = FALSE,
   base_size = 12,
   theme = NULL,
-  bin_threshold = 2000
+  bin_threshold = 2000,
+  expand = 0.02
 )
 }
 \arguments{
@@ -80,6 +81,11 @@ coastline -- is appended to it.}
 \item{bin_threshold}{How many points before binning becomes the default.
 2,000, which is roughly where overlap starts hiding structure at ordinary
 figure sizes.}
+
+\item{expand}{How much margin to leave around the data, as a fraction of its
+own extent. Widen it when the data does not reach anything a reader can
+orient by -- a small grid in open water shows no coastline at all until the
+panel is wide enough to include one.}
 }
 \value{
 A \pkg{ggplot2} object.

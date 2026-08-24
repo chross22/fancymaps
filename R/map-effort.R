@@ -22,6 +22,10 @@
 #' @param bin_threshold How many points before binning becomes the default.
 #'   2,000, which is roughly where overlap starts hiding structure at ordinary
 #'   figure sizes.
+#' @param expand How much margin to leave around the data, as a fraction of its
+#'   own extent. Widen it when the data does not reach anything a reader can
+#'   orient by -- a small grid in open water shows no coastline at all until the
+#'   panel is wide enough to include one.
 #' @inheritParams map_surface
 #'
 #' @details
@@ -54,7 +58,8 @@ map_effort <- function(tracks = NULL, points = NULL, value = NULL,
                        coastline = TRUE, region = NULL,
                        title = NULL, subtitle = NULL, caption = NULL,
                        scalebar = TRUE, north = TRUE, graticule = FALSE,
-                       base_size = 12, theme = NULL, bin_threshold = 2000) {
+                       base_size = 12, theme = NULL, bin_threshold = 2000,
+                       expand = 0.02) {
   if (is.null(tracks) && is.null(points)) {
     stop("map_effort() needs `tracks`, `points`, or both.", call. = FALSE)
   }
@@ -90,7 +95,8 @@ map_effort <- function(tracks = NULL, points = NULL, value = NULL,
   }
 
   extent <- shared_extent(Filter(Negate(is.null),
-                                 list(md_tracks, binned %||% md_points)))
+                                 list(md_tracks, binned %||% md_points)),
+                          expand)
   land <- coastline(extent, source = coastline, crs = crs)
 
   p <- ggplot2::ggplot()

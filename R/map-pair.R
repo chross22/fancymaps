@@ -38,6 +38,10 @@
 #' @param titles A length-2 character vector of panel titles.
 #' @param ncol Panels per row. Two side by side by default; `1` stacks them,
 #'   which suits a tall study area.
+#' @param expand How much margin to leave around the data, as a fraction of its
+#'   own extent. Widen it when the data does not reach anything a reader can
+#'   orient by -- a small grid in open water shows no coastline at all until the
+#'   panel is wide enough to include one.
 #' @inheritParams map_surface
 #'
 #' @details
@@ -78,7 +82,7 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
                      transform = "auto", limits = NULL, probs = c(0, 0.99),
                      title = NULL, subtitle = NULL, caption = NULL,
                      scalebar = TRUE, north = TRUE, graticule = FALSE,
-                     base_size = 12) {
+                     base_size = 12, expand = 0.02) {
   kind <- match.arg(kind)
   uncertainty_kind <- match.arg(uncertainty_kind)
 
@@ -93,7 +97,7 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
   crs <- display_crs(left, crs)
   left <- project_md(left, crs)
   right <- project_md(right, crs)
-  extent <- shared_extent(list(left, right))
+  extent <- shared_extent(list(left, right), expand)
 
   # One coastline object, fetched once and handed to both. Two calls would
   # return the same land and cost twice as much, and if the sources ever

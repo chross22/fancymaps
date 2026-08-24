@@ -14,8 +14,8 @@ adjacent.
 occupancy, uncertainty and extrapolation are the fitting package's job.
 
 It is the map half of a pair: [`fancyfx`](https://github.com/chross22/fancyfx)
-plots the same models' effects and evaluation, and this shares its theme and its
-typography so the two read as one system.
+plots the same models' effects and evaluation. See
+[Sister package](#sister-package-fancyfx) below.
 
 ## Install
 
@@ -105,6 +105,30 @@ between the two arms of the diverging one.
 
 Interactive maps (`leaflet`, `mapview`), basemap tiles, general GIS, and
 deciding the analysis.
+
+## Sister package: fancyfx
+
+[`fancyfx`](https://github.com/chross22/fancyfx) plots what a model claims —
+effect curves with a rug of the supporting data above them — and whether it has
+earned the claim: ROC, thresholds, calibration, permutation importance. This
+package draws where it says it.
+
+The two share a visual identity by construction rather than by agreement.
+`theme_fancymap()` is `fancyfx::theme_fancyfx()` with the axis furniture
+removed, so the fonts, the sizes and the legend styling come from one place and
+change in one place.
+
+The dependency runs one way: `fancymaps` imports `fancyfx`, and `fancyfx` knows
+nothing about `fancymaps`. That is the right direction — the maps package needs
+the effects package's identity, not the other way round — and it means map
+rendering's hard dependency on `sf` never reaches someone who installed a
+package to plot a partial effect.
+
+Some things stay over there on purpose. `fancyfx::mess()` and
+`plotExtrapolation()` are statements about a *model*, not about a map, so they
+belong beside the ROC curves — and what they produce is a common thing to hand
+to `map_diverging()`. `fancyfx::hex_bin()` is reused directly by `map_effort()`
+rather than reimplemented.
 
 ## See also
 

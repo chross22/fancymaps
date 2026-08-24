@@ -30,6 +30,10 @@
 #'   [theme_fancymap()].
 #' @param base_size Base font size in points.
 #' @param theme A theme to use instead of [theme_fancymap()].
+#' @param expand How much margin to leave around the data, as a fraction of its
+#'   own extent. The default is a thin margin. Widen it when the data does not
+#'   reach anything a reader can orient by -- a small grid in open water shows
+#'   no coastline at all until the panel is wide enough to include one.
 #'
 #' @details
 #' # What it does not do
@@ -64,7 +68,7 @@ map_surface <- function(x, value = NULL, by = NULL, coords = NULL, crs = NULL,
                         transform = "auto", limits = NULL, probs = c(0, 0.99),
                         title = NULL, subtitle = NULL, caption = NULL,
                         scalebar = TRUE, north = TRUE, graticule = FALSE,
-                        base_size = 12, theme = NULL) {
+                        base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
                     label = label)
@@ -81,7 +85,8 @@ map_surface <- function(x, value = NULL, by = NULL, coords = NULL, crs = NULL,
     crs = crs, coastline = coastline, region = region, graticule = graticule,
     title = title, subtitle = subtitle, caption = caption,
     notes = list(squish_note(spec, md$label)),
-    scalebar = scalebar, north = north, base_size = base_size, theme = theme
+    scalebar = scalebar, north = north, base_size = base_size, theme = theme,
+    expand = expand
   )
 }
 
@@ -129,7 +134,7 @@ map_probability <- function(x, value = NULL, by = NULL, coords = NULL,
                             region = NULL, limits = c(0, 1),
                             title = NULL, subtitle = NULL, caption = NULL,
                             scalebar = TRUE, north = TRUE, graticule = FALSE,
-                            base_size = 12, theme = NULL) {
+                            base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
                     label = label)
@@ -157,7 +162,8 @@ map_probability <- function(x, value = NULL, by = NULL, coords = NULL,
       paste0(outside, " cell(s) fall outside [", limits[1], ", ", limits[2],
              "] and are drawn at the ends.")
     }),
-    scalebar = scalebar, north = north, base_size = base_size, theme = theme
+    scalebar = scalebar, north = north, base_size = base_size, theme = theme,
+    expand = expand
   )
 }
 
@@ -208,7 +214,7 @@ map_diverging <- function(x, value = NULL, midpoint, by = NULL, coords = NULL,
                           direction = 1,
                           title = NULL, subtitle = NULL, caption = NULL,
                           scalebar = TRUE, north = TRUE, graticule = FALSE,
-                          base_size = 12, theme = NULL) {
+                          base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
                     label = label)
@@ -227,7 +233,8 @@ map_diverging <- function(x, value = NULL, midpoint, by = NULL, coords = NULL,
     graticule = graticule, title = title, subtitle = subtitle,
     caption = caption,
     notes = list(squish_note(spec, md$label)),
-    scalebar = scalebar, north = north, base_size = base_size, theme = theme
+    scalebar = scalebar, north = north, base_size = base_size, theme = theme,
+    expand = expand
   )
 }
 

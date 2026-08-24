@@ -20,6 +20,10 @@
 #' @param ncol Panels per row. Chosen to keep the figure roughly square when
 #'   not given.
 #' @param label What to call the quantity in the single shared legend.
+#' @param expand How much margin to leave around the data, as a fraction of its
+#'   own extent. Widen it when the data does not reach anything a reader can
+#'   orient by -- a small grid in open water shows no coastline at all until the
+#'   panel is wide enough to include one.
 #' @inheritParams map_surface
 #'
 #' @details
@@ -63,7 +67,7 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
                        transform = "auto", limits = NULL, probs = c(0, 0.99),
                        title = NULL, subtitle = NULL, caption = NULL,
                        scalebar = TRUE, north = TRUE, graticule = FALSE,
-                       base_size = 11) {
+                       base_size = 11, expand = 0.02) {
   kind <- match.arg(kind)
   panels <- panel_values(x, values)
   titles <- titles %||% names(panels)
@@ -75,7 +79,7 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
 
   crs <- display_crs(mds[[1]], crs)
   mds <- lapply(mds, project_md, crs = crs)
-  extent <- shared_extent(mds)
+  extent <- shared_extent(mds, expand)
   land <- coastline(extent, source = coastline, crs = crs)
 
   # The whole reason this function exists: one scale, computed over everything.

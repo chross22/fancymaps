@@ -27,7 +27,8 @@ map_panels(
   scalebar = TRUE,
   north = TRUE,
   graticule = FALSE,
-  base_size = 11
+  base_size = 11,
+  expand = 0.02
 )
 }
 \arguments{
@@ -82,6 +83,11 @@ coastline -- is appended to it.}
 \code{\link[=theme_fancymap]{theme_fancymap()}}.}
 
 \item{base_size}{Base font size in points.}
+
+\item{expand}{How much margin to leave around the data, as a fraction of its
+own extent. Widen it when the data does not reach anything a reader can
+orient by -- a small grid in open water shows no coastline at all until the
+panel is wide enough to include one.}
 }
 \value{
 A \pkg{patchwork} object.

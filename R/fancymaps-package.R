@@ -53,12 +53,37 @@
 #' in a warning and on the figure -- because a map with no coastline looks
 #' deliberate, and a reader cannot tell an ocean model from a missing layer.
 #'
-#' @section House style:
+#' @section Sister package -- fancyfx:
+#' \pkg{fancyfx} is the other half of the pair. It plots what a model claims --
+#' effect curves with a rug of the supporting data above them -- and whether it
+#' has earned the claim: ROC, thresholds, calibration, permutation importance.
+#' This package draws where it says it.
+#'
+#' The two share a visual identity by construction rather than by agreement.
 #' [theme_fancymap()] is [fancyfx::theme_fancyfx()] with the axis furniture
-#' removed, so a figure from this package and a figure from that one read as
-#' one system. Colours come from scales that were chosen: see
-#' `vignette("scales")` for why a square-root transform with automatic breaks
-#' is not a scale, and what replaces it.
+#' removed, so the fonts, the sizes and the legend styling come from one place
+#' and change in one place. An effect figure and a map figure from the same
+#' analysis read as one system.
+#'
+#' The dependency runs one way: this package imports \pkg{fancyfx}, and
+#' \pkg{fancyfx} knows nothing about this one. That is the right direction --
+#' the maps package needs the effects package's identity, not the other way
+#' round -- and it means map rendering's hard dependency on \pkg{sf} never
+#' reaches someone who installed a package to plot a partial effect.
+#'
+#' Some things stay over there on purpose. [fancyfx::mess()] and
+#' [fancyfx::plotExtrapolation()] are statements about a *model*, not about a
+#' map, so they belong beside the ROC curves; what they produce is a common
+#' thing to hand to [map_diverging()]. [fancyfx::hex_bin()] is reused directly
+#' by [map_effort()] rather than reimplemented.
+#'
+#' @section Scales:
+#' Colours come from scales that were chosen. See [surface_scale()] for why a
+#' square-root transform with automatic breaks is not a scale and what replaces
+#' it, and [diverging_scale()] for why a midpoint has no default.
+#'
+#' @seealso \pkg{fancyfx} at <https://github.com/chross22/fancyfx>, which plots
+#'   the effects and the evaluation of the same models these maps come from.
 #'
 #' @keywords internal
 "_PACKAGE"

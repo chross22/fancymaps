@@ -1,0 +1,322 @@
+# fancymaps
+
+Publication-ready maps for spatial model output.
+
+A model that predicts over space produces a map, and a map is not a
+heatmap with coordinates. It needs land, so a reader can tell one bay
+from another and check that the study area is the water they think it
+is. It needs a stated projection, so that area means area. It needs a
+colour scale chosen for the quantity being drawn rather than whichever
+default fell out. And when a value is shown beside its uncertainty, the
+two need to be one figure rather than two that happen to be adjacent.
+
+`fancymaps` draws those maps. It does not compute what goes on them —
+density, occupancy, uncertainty and extrapolation are the fitting
+package’s job.
+
+It is the map half of a pair:
+[`fancyfx`](https://github.com/chross22/fancyfx) plots the same models’
+effects and evaluation. See [Sister package](#sister-package-fancyfx)
+below.
+
+## Install
+
+``` r
+
+# install.packages("remotes")
+remotes::install_github("chross22/fancymaps")
+```
+
+## The maps
+
+``` r
+
+library(fancymaps)
+grid <- example_grid()
+
+# a predicted surface
+map_surface(grid, "density", label = "animals per km2")
+
+# a probability, on a scale fixed at 0 and 1
+map_probability(grid, "occupancy")
+
+# something with a meaningful centre -- the midpoint is required
+map_diverging(grid, "mess", midpoint = 0, direction = -1)
+
+# a value beside its uncertainty, as one figure
+map_pair(grid, "density", "mess",
+         uncertainty_kind = "diverging", uncertainty_direction = -1,
+         labels = c("animals per km2", "MESS"))
+
+# with a locator inset, for saying where in the world this is
+map_surface(grid, "density", inset = TRUE)
+
+# furniture goes where the data leaves room for it
+map_surface(grid, "density", north_position = "br", scalebar_position = "bl")
+
+# a series, on one shared scale
+map_panels(grid, cbind(spring = grid$density, summer = grid$density * 2.5))
+
+# survey effort, binned when there is too much of it to draw
+map_effort(points = sightings, size = "group_size")
+```
+
+## Interactive
+
+The same maps as `leaflet` widgets — pan, zoom, click a cell for its
+value:
+
+``` r
+
+leaflet_surface(grid, "density", label = "animals per km2",
+                popup = c("depth", "sst"))
+leaflet_probability(grid, "occupancy")
+leaflet_diverging(grid, "mess", midpoint = 0, direction = -1)
+
+# a pair and a series become a switch rather than two maps
+leaflet_pair(grid, "density", "cv")
+leaflet_panels(grid, seasons, label = "animals per km2")
+```
+
+A pair and a series put every layer on one map behind a radio control.
+That is the better interactive form, not a shortcut: switching layers is
+a blink comparison — same cells, same position, same zoom — so nothing
+needs aligning because nothing moved. The static
+[`map_pair()`](https://camilleross.org/fancymaps/reference/map_pair.md)
+and
+[`map_panels()`](https://camilleross.org/fancymaps/reference/map_panels.md)
+remain the answer when both have to be visible at once.
+
+These exist for the **decisions**, not the rendering — `leaflet` does
+that perfectly well on its own. Handing it a grid directly means
+re-deciding the scale at the call site, and
+[`leaflet::colorNumeric()`](https://rstudio.github.io/leaflet/reference/colorNumeric.html)
+decides differently: linear, over the full data range, with no capping.
+The static figure and the interactive one then show the same numbers in
+different colours. These reuse the same scale objects, and the test
+suite asserts the two agree at exact hex equality, cell for cell.
+
+One thing to know: land comes from the tile provider, so unlike every
+static map here, **these need the network at draw time**.
+
+## What it accepts
+
+Not one blessed type.
+[`as_map_data()`](https://camilleross.org/fancymaps/reference/as_map_data.md)
+takes:
+
+- `sf` polygons, points and lines,
+- a `terra` `SpatRaster`,
+- a plain data frame with coordinate columns — which is the form model
+  output usually arrives in, since `mgcv` and `dsm` want geometry
+  dropped and a prediction rejoined afterwards.
+
+Values may sit on the object as a column, or arrive separately and be
+joined by an identifier:
+
+``` r
+
+# a posterior summary, keyed by cell id
+occupancy <- setNames(colMeans(posterior_z), grid$grid_id)
+map_probability(grid, occupancy, by = "grid_id")
+```
+
+That second path is not an afterthought. A posterior summary comes out
+of an MCMC fit as a bare vector and a covariate comes out of an
+averaging step as a matrix; requiring the caller to bind the column on
+first is requiring them to assert the row order matches, and that
+assertion is silent when it is wrong. Every unmatched key is an error
+naming the key, rather than a hole in the map.
+
+## Things it insists on
+
+**Land, or an explanation.** Drawn by default, at a resolution chosen
+from the extent. If no source can be found the map still draws, but it
+is captioned to say so — a map with no coastline looks deliberate.
+“There is no land in this extent” and “no coastline source was
+available” are captioned differently, because they mean opposite things
+and look identical.
+
+**One projection per figure.** Taken from the data when it is projected,
+and a Lambert azimuthal equal-area centred on the data when it is
+lon/lat. Areas are computed in an equal-area projection regardless,
+never in the display one.
+
+**That the CRS you state matches the numbers you hand over.** Every
+layer in a figure is transformed to one system before anything is drawn,
+so they agree by construction. What is checked is the place a coordinate
+system is *asserted* rather than read — `crs =` on a plain data frame.
+Eastings and northings declared as lon/lat are an error, because
+longitude cannot pass 180; degrees declared as metres are a warning,
+because read as metres they describe a study area a few hundred metres
+across in the wrong ocean. Neither can tell UTM 19N from 20N, and
+neither tries.
+
+**A scale that was chosen.** For a skewed quantity, a transform selected
+by a stated rule, reported when it fires, and named in the legend, with
+breaks at round numbers in the original units. Limits from a quantile,
+values beyond them capped rather than dropped, and the top label marked
+`≥` so the capping is visible. For a diverging quantity, `midpoint` is
+required and has no default — zero for an extrapolation score, the mean
+for deviance residuals, never the middle of the range.
+
+**Colours that survive colour blindness.** The ramps are checked by
+simulation in the test suite rather than asserted: monotone luminance
+under protanopia and deuteranopia for the sequential and bounded ramps,
+and measured separation between the two arms of the diverging one.
+
+## Not this package’s job
+
+Interactive maps (`leaflet`, `mapview`), basemap tiles, general GIS, and
+deciding the analysis.
+
+## Sister package: fancyfx
+
+[`fancyfx`](https://github.com/chross22/fancyfx) plots what a model
+claims — effect curves with a rug of the supporting data above them —
+and whether it has earned the claim: ROC, thresholds, calibration,
+permutation importance. This package draws where it says it.
+
+The two share a visual identity by construction rather than by
+agreement.
+[`theme_fancymap()`](https://camilleross.org/fancymaps/reference/theme_fancymap.md)
+is
+[`fancyfx::theme_fancyfx()`](https://camilleross.org/fancyfx/reference/theme_fancyfx.html)
+with the axis furniture removed, so the fonts, the sizes and the legend
+styling come from one place and change in one place.
+
+The dependency runs one way: `fancymaps` imports `fancyfx`, and
+`fancyfx` knows nothing about `fancymaps`. That is the right direction —
+the maps package needs the effects package’s identity, not the other way
+round — and it means map rendering’s hard dependency on `sf` never
+reaches someone who installed a package to plot a partial effect.
+
+Some things stay over there on purpose.
+[`fancyfx::mess()`](https://camilleross.org/fancyfx/reference/mess.html)
+and `plotExtrapolation()` are statements about a *model*, not about a
+map, so they belong beside the ROC curves — and what they produce is a
+common thing to hand to
+[`map_diverging()`](https://camilleross.org/fancymaps/reference/map_diverging.md).
+[`fancyfx::hex_bin()`](https://camilleross.org/fancyfx/reference/hex_bin.html)
+is reused directly by
+[`map_effort()`](https://camilleross.org/fancymaps/reference/map_effort.md)
+rather than reimplemented.
+
+## Documentation
+
+|  |  |
+|----|----|
+| [Choosing a scale](https://camilleross.org/fancymaps/vignettes/scales.Rmd) | why `trans = "sqrt"` is not a scale, and what replaces it |
+
+## Development
+
+``` r
+
+devtools::test()                 # includes 14 vdiffr snapshots
+testthat::snapshot_review()      # look at any figure that changed
+```
+
+Snapshot baselines are platform-specific — svglite records text widths
+from system font metrics — so a first run elsewhere reports typography
+diffs rather than regressions. See `DECISIONS.md`.
+
+## See also
+
+`DECISIONS.md` records the choices, the measurements behind them, and
+the bugs found while making them.
+
+# Package index
+
+## The maps
+
+One verb per question a map answers. Each resolves land, projection and
+a colour scale chosen for the quantity, and says so in the figure when
+it had to decide something.
+
+- [`map_surface()`](https://camilleross.org/fancymaps/reference/map_surface.md)
+  : Map a predicted surface
+- [`map_probability()`](https://camilleross.org/fancymaps/reference/map_probability.md)
+  : Map a probability
+- [`map_diverging()`](https://camilleross.org/fancymaps/reference/map_diverging.md)
+  : Map a quantity with a meaningful centre
+- [`map_pair()`](https://camilleross.org/fancymaps/reference/map_pair.md)
+  : A surface and its uncertainty, as one figure
+- [`map_panels()`](https://camilleross.org/fancymaps/reference/map_panels.md)
+  : The same geography over several periods, on one scale
+- [`map_effort()`](https://camilleross.org/fancymaps/reference/map_effort.md)
+  : Map survey effort and detections
+- [`hex_surface()`](https://camilleross.org/fancymaps/reference/hex_surface.md)
+  : Bin point values into a hexagonal surface
+
+## Interactive
+
+The same maps as leaflet widgets, built from the same scale objects so a
+cell is the same colour in both renderers. A pair and a series become a
+layer switch on one map rather than two maps.
+
+- [`leaflet_surface()`](https://camilleross.org/fancymaps/reference/leaflet-maps.md)
+  [`leaflet_probability()`](https://camilleross.org/fancymaps/reference/leaflet-maps.md)
+  [`leaflet_diverging()`](https://camilleross.org/fancymaps/reference/leaflet-maps.md)
+  : Interactive versions of the maps
+- [`leaflet_pair()`](https://camilleross.org/fancymaps/reference/leaflet_pair.md)
+  : A surface and its uncertainty, interactively
+- [`leaflet_panels()`](https://camilleross.org/fancymaps/reference/leaflet_panels.md)
+  : A series over several periods, interactively
+
+## What the maps are built from
+
+The data contract, the coastline, and the two coordinate-system
+questions – what a map is drawn in and what areas are measured in –
+answered separately on purpose.
+
+- [`as_map_data()`](https://camilleross.org/fancymaps/reference/as_map_data.md)
+  : Put spatial model output into the form the maps draw from
+- [`coastline()`](https://camilleross.org/fancymaps/reference/coastline.md)
+  [`coastline_fixture()`](https://camilleross.org/fancymaps/reference/coastline.md)
+  : A coastline for a map
+- [`display_crs()`](https://camilleross.org/fancymaps/reference/display_crs.md)
+  : The coordinate system a map is drawn in
+- [`equal_area_crs()`](https://camilleross.org/fancymaps/reference/equal_area_crs.md)
+  : The coordinate system areas and distances are computed in
+- [`area_km2()`](https://camilleross.org/fancymaps/reference/area_km2.md)
+  : Areas in square kilometres, computed honestly
+
+## Scales
+
+How a surface should be coloured, decided by stated rules and reported
+when a rule fires. See vignette(“scales”) for the argument.
+
+- [`surface_scale()`](https://camilleross.org/fancymaps/reference/surface_scale.md)
+  : How a surface should be coloured
+- [`diverging_scale()`](https://camilleross.org/fancymaps/reference/diverging_scale.md)
+  : How a diverging surface should be coloured
+- [`fancymap_palette()`](https://camilleross.org/fancymaps/reference/fancymap_palette.md)
+  : The colour ramps these maps use
+
+## Furniture and style
+
+Scale bar, north arrow, locator inset, and the theme shared with
+fancyfx.
+
+- [`scale_bar()`](https://camilleross.org/fancymaps/reference/scale_bar.md)
+  : A scale bar, sized for the panel it is drawn in
+- [`north_arrow()`](https://camilleross.org/fancymaps/reference/north_arrow.md)
+  : A north arrow
+- [`locator_inset()`](https://camilleross.org/fancymaps/reference/locator_inset.md)
+  : A locator inset
+- [`theme_fancymap()`](https://camilleross.org/fancymaps/reference/theme_fancymap.md)
+  : A theme for maps
+- [`theme_fancymap_panel()`](https://camilleross.org/fancymaps/reference/theme_fancymap_panel.md)
+  : The map theme as used inside a multi-panel figure
+
+## Example data
+
+- [`example_grid()`](https://camilleross.org/fancymaps/reference/example_grid.md)
+  : A small example grid
+
+# Articles
+
+### All vignettes
+
+- [Choosing a
+  scale](https://camilleross.org/fancymaps/articles/scales.md):

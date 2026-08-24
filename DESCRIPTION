@@ -1,0 +1,51 @@
+Package: fancymaps
+Title: Publication-Ready Maps for Spatial Model Output
+Version: 0.0.0.9000
+Authors@R:
+    person("Camille", "Ross", email = "camille.ross@maine.edu", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-1428-2294"))
+Description: Draws the maps a spatial modelling pipeline produces, with the
+    parts a reader needs to navigate one: land, a stated projection, a scale
+    that was chosen rather than defaulted, and optional scale bar, north arrow
+    and locator inset. Handles the quantities these models actually emit --
+    a skewed positive surface such as predicted density, a bounded probability
+    such as posterior occupancy, a diverging quantity with a meaningful zero
+    such as an extrapolation score, and the uncertainty that belongs beside any
+    of them. A value and its uncertainty are drawn as one paired figure with a
+    shared extent and aligned panels, and a series over time as small multiples
+    on one shared scale, because panels drawn separately do not compare.
+    Accepts the forms model output arrives in: 'sf' polygons, points and lines,
+    'terra' rasters, and a plain data frame with coordinate columns, which is
+    what remains once geometry has been dropped for modelling. Shares a visual
+    identity with 'fancyfx', which plots the same models' effects and
+    evaluation.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.4)
+Imports:
+    fancyfx,
+    ggplot2 (>= 3.5.0),
+    grDevices,
+    grid,
+    patchwork,
+    rlang,
+    scales,
+    sf (>= 1.0.0),
+    stats,
+    utils
+Suggests:
+    knitr,
+    rmarkdown,
+    rnaturalearth,
+    rnaturalearthdata,
+    rnaturalearthhires,
+    terra,
+    testthat (>= 3.0.0)
+URL: https://github.com/chross22/fancymaps
+BugReports: https://github.com/chross22/fancymaps/issues
+Additional_repositories: https://ropensci.r-universe.dev
+Config/testthat/edition: 3
+LazyData: true
+Config/roxygen2/version: 8.1.0

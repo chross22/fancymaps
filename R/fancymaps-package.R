@@ -78,9 +78,10 @@
 #' by [map_effort()] rather than reimplemented.
 #'
 #' @section Scales:
-#' Colours come from scales that were chosen. See [surface_scale()] for why a
-#' square-root transform with automatic breaks is not a scale and what replaces
-#' it, and [diverging_scale()] for why a midpoint has no default.
+#' Colours come from scales that were chosen. `vignette("scales")` is the long
+#' version -- why a square-root transform with automatic breaks is not a scale,
+#' what replaces it, and why a diverging midpoint has no default. See
+#' [surface_scale()] and [diverging_scale()] for the reference pages.
 #'
 #' @seealso \pkg{fancyfx} at <https://github.com/chross22/fancyfx>, which plots
 #'   the effects and the evaluation of the same models these maps come from.

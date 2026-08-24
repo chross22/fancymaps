@@ -474,11 +474,15 @@ neighbours.
 
 ---
 
-## Not done yet
+## Standing caveats
 
-* **A vignette.** The package documentation points at [surface_scale()] and
-  [diverging_scale()] for the scale reasoning rather than at a vignette, but a
-  worked one covering both renderers would be better than either.
+Every requirement in `dsmfit`'s `docs/02-mapping-package.md` is implemented,
+including the three it lists as non-goals and which were later asked for --
+interactive maps, a locator inset, and furniture placement. What is left is not
+missing work but a condition of the build:
+
 * **`rnaturalearthhires` is declared in `Suggests`** and is not on CRAN, so
   `R CMD check` needs `_R_CHECK_FORCE_SUGGESTS_=false` on a machine without it.
-  Status with that set: **0 errors, 0 warnings, 0 notes.**
+  Status with that set, vignette rebuilt: **0 errors, 0 warnings, 0 notes.**
+* **Snapshot baselines are platform-specific.** See "Visual regression" above.
+  CI should pin one image and regenerate on it once.

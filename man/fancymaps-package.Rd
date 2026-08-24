@@ -96,9 +96,10 @@ by \code{\link[=map_effort]{map_effort()}} rather than reimplemented.
 
 \section{Scales}{
 
-Colours come from scales that were chosen. See \code{\link[=surface_scale]{surface_scale()}} for why a
-square-root transform with automatic breaks is not a scale and what replaces
-it, and \code{\link[=diverging_scale]{diverging_scale()}} for why a midpoint has no default.
+Colours come from scales that were chosen. \code{vignette("scales")} is the long
+version -- why a square-root transform with automatic breaks is not a scale,
+what replaces it, and why a diverging midpoint has no default. See
+\code{\link[=surface_scale]{surface_scale()}} and \code{\link[=diverging_scale]{diverging_scale()}} for the reference pages.
 }
 
 \seealso{

@@ -177,6 +177,12 @@ belong beside the ROC curves — and what they produce is a common thing to hand
 to `map_diverging()`. `fancyfx::hex_bin()` is reused directly by `map_effort()`
 rather than reimplemented.
 
+## Documentation
+
+| | |
+|---|---|
+| [Choosing a scale](vignettes/scales.Rmd) | why `trans = "sqrt"` is not a scale, and what replaces it |
+
 ## Development
 
 ```r

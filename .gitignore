@@ -6,3 +6,5 @@
 *.Rcheck/
 .DS_Store
 pkgdown-site/
+README.html
+Rplots.pdf

@@ -24,7 +24,7 @@ leaflet_pair(
   limits = NULL,
   probs = c(0, 0.99),
   popup = NULL,
-  tiles = "CartoDB.Positron",
+  tiles = "Esri.WorldGrayCanvas",
   opacity = 0.8,
   position = "topright"
 )
@@ -103,8 +103,9 @@ leaflet_pair(
 - tiles:
 
   A leaflet provider name for the basemap, or `NULL` for no basemap at
-  all. The default is a quiet grey one, so the data is the brightest
-  thing on the map rather than competing with a road network.
+  all. The default is `"Esri.WorldGrayCanvas"`, a quiet grey one, so the
+  data is the brightest thing on the map rather than competing with a
+  road network. It is also key-free: see the note on `leaflet_base()`.
 
 - opacity:
 

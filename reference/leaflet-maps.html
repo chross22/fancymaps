@@ -65,7 +65,7 @@ the reader should be able to find their own bay.</p>
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.99</span><span class="op">)</span>,</span>
 <span>  popup <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tiles <span class="op">=</span> <span class="st">"CartoDB.Positron"</span>,</span>
+<span>  tiles <span class="op">=</span> <span class="st">"Esri.WorldGrayCanvas"</span>,</span>
 <span>  opacity <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  legend <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
@@ -79,7 +79,7 @@ the reader should be able to find their own bay.</p>
 <span>  label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  popup <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tiles <span class="op">=</span> <span class="st">"CartoDB.Positron"</span>,</span>
+<span>  tiles <span class="op">=</span> <span class="st">"Esri.WorldGrayCanvas"</span>,</span>
 <span>  opacity <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  legend <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
@@ -96,7 +96,7 @@ the reader should be able to find their own bay.</p>
 <span>  probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.99</span><span class="op">)</span>,</span>
 <span>  direction <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  popup <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tiles <span class="op">=</span> <span class="st">"CartoDB.Positron"</span>,</span>
+<span>  tiles <span class="op">=</span> <span class="st">"Esri.WorldGrayCanvas"</span>,</span>
 <span>  opacity <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  legend <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -126,8 +126,9 @@ turns popups off.</p></dd>
 
 <dt id="arg-tiles">tiles<a class="anchor" aria-label="anchor" href="#arg-tiles"></a></dt>
 <dd><p>A <span class="pkg">leaflet</span> provider name for the basemap, or <code>NULL</code> for no
-basemap at all. The default is a quiet grey one, so the data is the
-brightest thing on the map rather than competing with a road network.</p></dd>
+basemap at all. The default is <code>"Esri.WorldGrayCanvas"</code>, a quiet grey one,
+so the data is the brightest thing on the map rather than competing with a
+road network. It is also key-free: see the note on <code>leaflet_base()</code>.</p></dd>
 
 
 <dt id="arg-opacity">opacity<a class="anchor" aria-label="anchor" href="#arg-opacity"></a></dt>

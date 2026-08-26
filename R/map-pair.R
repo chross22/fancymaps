@@ -112,13 +112,29 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
   panel_theme <- theme_fancymap_panel(base_size = base_size,
                                       graticule = graticule)
 
+  # Both scales are settled HERE rather than inside the panels, because the
+  # figure has to say what they decided and only this level can see both. A
+  # pair's panels resolve their scales separately -- unlike map_panels(), where
+  # one shared scale means one note -- so either panel may cap, and each cap is
+  # a fact about the figure. Found drawing dsmfit's projection pair: the
+  # density panel capped at its 99th percentile and the figure did not mention
+  # it. The first fix gave each panel its own caption, which was worse: two
+  # notes, each left-aligned under its own panel, each far wider than a panel
+  # is, printed on top of each other and neither legible. Two capped panels is
+  # the ordinary case, not the corner -- `probs` caps at the 99th percentile by
+  # default, so most real pairs cap twice -- and one caption under the whole
+  # figure is the only place two full sentences fit.
+  spec_left <- panel_spec(left, kind, transform, limits, probs)
+  spec_right <- panel_spec(right, uncertainty_kind, transform, NULL, probs,
+                           uncertainty_midpoint)
+
   p_left <- panel_of(left, kind = kind, transform = transform, limits = limits,
                      probs = probs, land = land, region = region,
                      extent = extent, crs = crs, graticule = graticule,
                      title = titles[1] %||% NULL, base_size = base_size,
                      theme = panel_theme, scalebar = scalebar, north = north,
                      scalebar_position = scalebar_position,
-                     north_position = north_position, caption_note = TRUE)
+                     north_position = north_position, spec = spec_left)
 
   p_right <- panel_of(right, kind = uncertainty_kind, transform = transform,
                       limits = NULL, probs = probs, land = land,
@@ -130,11 +146,28 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
                       # The furniture goes on the left panel only: the extent
                       # is identical, so a second scale bar measures nothing
                       # new and a second north arrow points the same way.
-                      scalebar = FALSE, north = FALSE, caption_note = TRUE)
+                      scalebar = FALSE, north = FALSE, spec = spec_right)
+
+  # One note per line: joined with a space they run past the figure edge and
+  # the second is clipped, which is the same silence in a different place.
+  #
+  # The land note belongs here too, and was missing entirely -- every other
+  # verb carries it and a pair did not, so a pair drawn where no coastline
+  # source resolved said nothing about it. That is the one thing the package
+  # promises never to leave unsaid: a map with no shoreline looks deliberate,
+  # and "there is no land in this extent" and "no source was available" are
+  # opposite facts that look identical.
+  notes <- c(squish_note(spec_left, left$label),
+             squish_note(spec_right, right$label),
+             no_land_note(land, coastline))
 
   patchwork::wrap_plots(list(p_left, p_right), ncol = ncol) +
     patchwork::plot_annotation(
-      title = title, subtitle = subtitle, caption = caption,
+      title = title, subtitle = subtitle,
+      caption = build_caption(
+        caption,
+        list(if (length(notes)) paste(notes, collapse = "\n"))
+      ),
       theme = ggplot2::theme(
         plot.title = ggplot2::element_text(size = base_size * 1.1,
                                            face = "bold", hjust = 0),
@@ -153,8 +186,7 @@ panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
                      crs, graticule, title, base_size, theme,
                      midpoint = NULL, direction = 1, scalebar = FALSE,
                      north = FALSE, scalebar_position = "bl",
-                     north_position = "tr", name = NULL, spec = NULL,
-                     caption_note = FALSE) {
+                     north_position = "tr", name = NULL, spec = NULL) {
   # A caller that has already settled the scale hands the WHOLE spec down,
   # rather than the transform and the limits for this panel to re-derive from.
   #
@@ -166,21 +198,7 @@ panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
   # legend. The figure then draws one legend per panel: exactly the thing a
   # shared scale exists to prevent, and it looks like a layout quirk rather
   # than like the scales having silently diverged.
-  spec <- spec %||% switch(
-    kind,
-    surface = surface_scale(md$value, transform = transform, limits = limits,
-                            probs = probs),
-    probability = list(limits = limits %||% c(0, 1),
-                       breaks = seq(0, 1, length.out = 5),
-                       transform = "identity", squished = FALSE, note = NULL),
-    diverging = {
-      s <- diverging_scale(md$value, midpoint = midpoint %||% 0,
-                           limits = limits, probs = c(0.01, 0.99))
-      s$rescaler <- diverging_rescaler(s$midpoint)
-      s$labels <- squish_labels(ggplot2::waiver(), s$limits, s$squished)
-      s
-    }
-  )
+  spec <- spec %||% panel_spec(md, kind, transform, limits, probs, midpoint)
 
   palette <- switch(kind, surface = "sequential", probability = "bounded",
                     diverging = "diverging")
@@ -207,17 +225,30 @@ panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
                          base_size = base_size)
   }
 
-  # The cap note, when this panel is asked to carry its own. A single map
-  # appends it to the figure caption and map_panels() to the shared one, but a
-  # pair's panels resolve their scales separately -- so without this a capped
-  # left panel said nothing, and a silent cap is the exact thing squishing
-  # instead of censoring was meant to prevent. Found drawing dsmfit's
-  # projection pair: the density panel capped at its 99th percentile and the
-  # figure did not mention it.
-  p + ggplot2::labs(
-    title = title,
-    caption = if (caption_note) squish_note(spec, md$label)
-  ) + theme
+  p + ggplot2::labs(title = title) + theme
+}
+
+# The scale a panel is drawn on, resolved from the panel's own values. Split
+# out of `panel_of()` so that a caller can settle the scale first and still
+# read what it decided -- `map_pair()` needs both panels' specs to write one
+# caption, and computing them here rather than inside each panel is what keeps
+# the caption and the colours describing the same numbers.
+panel_spec <- function(md, kind, transform, limits, probs, midpoint = NULL) {
+  switch(
+    kind,
+    surface = surface_scale(md$value, transform = transform, limits = limits,
+                            probs = probs),
+    probability = list(limits = limits %||% c(0, 1),
+                       breaks = seq(0, 1, length.out = 5),
+                       transform = "identity", squished = FALSE, note = NULL),
+    diverging = {
+      s <- diverging_scale(md$value, midpoint = midpoint %||% 0,
+                           limits = limits, probs = c(0.01, 0.99))
+      s$rescaler <- diverging_rescaler(s$midpoint)
+      s$labels <- squish_labels(ggplot2::waiver(), s$limits, s$squished)
+      s
+    }
+  )
 }
 
 # The two panels of a pair are read cell by cell, so they have to BE the same

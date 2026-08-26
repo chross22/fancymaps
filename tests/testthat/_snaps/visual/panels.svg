@@ -444,23 +444,23 @@
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
 <text x='425.43' y='187.07' style='font-size: 10.45px; font-weight: bold; font-family: sans;' textLength='34.86px' lengthAdjust='spacingAndGlyphs'>autumn</text>
-<rect x='638.89' y='262.95' width='72.64' height='69.87' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-<text x='675.21' y='270.79' text-anchor='middle' style='font-size: 9.90px; font-weight: bold; font-family: sans;' textLength='72.64px' lengthAdjust='spacingAndGlyphs'>animals per km2</text>
-<text x='675.21' y='281.48' text-anchor='middle' style='font-size: 9.90px; font-weight: bold; font-family: sans;' textLength='45.67px' lengthAdjust='spacingAndGlyphs'>(log scale)</text>
-<image width='28.49' height='44.83' x='643.08' y='287.99' preserveAspectRatio='none' xlink:href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAEsCAYAAAACUNnVAAAAxUlEQVQ4jYVQyRHEMAgT9LL9l7VVxMrD8cXlj0egiwTP/0dtALRR0NEDgTYC2jB2neAavSRlnzN+C+VsiyQ1ayo7kh3V7IfU76hXce6NdAapO5KBjkzjh4MElGakzN0aJ7K2zGFtabKxXQ9qFCgIKDDR9ozeNS5Wus2zsgIAHwo5JGk54HWUoBdZb3WQZLaQIKCCrK1mTWikCz61vvkbGaQwlriRM+9MCca9l+cfKuMR2dILMqJ51hHl7nx4l1yiLBFd6p4XLgma/kk5NhIAAAAASUVORK5CYII='/>
-<rect x='643.08' y='287.99' width='28.49' height='44.83' style='stroke-width: 1.07; stroke: none;' />
-<polyline points='668.12,331.87 671.58,331.87 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='668.12,310.22 671.58,310.22 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='668.12,291.40 671.58,291.40 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='668.12,288.06 671.58,288.06 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='646.54,331.87 643.08,331.87 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='646.54,310.22 643.08,310.22 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='646.54,291.40 643.08,291.40 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='646.54,288.06 643.08,288.06 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<text x='677.06' y='335.28' style='font-size: 9.90px; font-family: sans;' textLength='30.28px' lengthAdjust='spacingAndGlyphs'>0.0001</text>
-<text x='677.06' y='313.63' style='font-size: 9.90px; font-family: sans;' textLength='19.27px' lengthAdjust='spacingAndGlyphs'>0.02</text>
-<text x='677.06' y='294.81' style='font-size: 9.90px; font-family: sans;' textLength='5.51px' lengthAdjust='spacingAndGlyphs'>2</text>
-<text x='677.06' y='291.47' style='font-size: 9.90px; font-family: sans;' textLength='27.45px' lengthAdjust='spacingAndGlyphs'>≥ 4.52</text>
+<rect x='638.89' y='225.09' width='72.64' height='145.59' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
+<text x='638.89' y='232.93' style='font-size: 9.90px; font-weight: bold; font-family: sans;' textLength='72.64px' lengthAdjust='spacingAndGlyphs'>animals per km2</text>
+<text x='638.89' y='243.62' style='font-size: 9.90px; font-weight: bold; font-family: sans;' textLength='45.67px' lengthAdjust='spacingAndGlyphs'>(log scale)</text>
+<image width='9.96' height='120.55' x='638.89' y='250.13' preserveAspectRatio='none' xlink:href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAEsCAYAAAACUNnVAAAAxUlEQVQ4jYVQyRHEMAgT9LL9l7VVxMrD8cXlj0egiwTP/0dtALRR0NEDgTYC2jB2neAavSRlnzN+C+VsiyQ1ayo7kh3V7IfU76hXce6NdAapO5KBjkzjh4MElGakzN0aJ7K2zGFtabKxXQ9qFCgIKDDR9ozeNS5Wus2zsgIAHwo5JGk54HWUoBdZb3WQZLaQIKCCrK1mTWikCz61vvkbGaQwlriRM+9MCca9l+cfKuMR2dILMqJ51hHl7nx4l1yiLBFd6p4XLgma/kk5NhIAAAAASUVORK5CYII='/>
+<rect x='638.89' y='250.13' width='9.96' height='120.55' style='stroke-width: 1.07; stroke: none;' />
+<polyline points='645.40,368.13 648.85,368.13 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='645.40,309.91 648.85,309.91 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='645.40,259.30 648.85,259.30 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='645.40,250.33 648.85,250.33 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='642.35,368.13 638.89,368.13 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='642.35,309.91 638.89,309.91 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='642.35,259.30 638.89,259.30 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='642.35,250.33 638.89,250.33 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<text x='654.33' y='371.53' style='font-size: 9.90px; font-family: sans;' textLength='30.28px' lengthAdjust='spacingAndGlyphs'>0.0001</text>
+<text x='654.33' y='313.31' style='font-size: 9.90px; font-family: sans;' textLength='19.27px' lengthAdjust='spacingAndGlyphs'>0.02</text>
+<text x='654.33' y='262.71' style='font-size: 9.90px; font-family: sans;' textLength='5.51px' lengthAdjust='spacingAndGlyphs'>2</text>
+<text x='654.33' y='253.74' style='font-size: 9.90px; font-family: sans;' textLength='27.45px' lengthAdjust='spacingAndGlyphs'>≥ 4.52</text>
 <text x='8.47' y='413.82' style='font-size: 7.70px; fill: #4D4D4D; font-family: sans;' textLength='269.68px' lengthAdjust='spacingAndGlyphs'>Colour is capped at 4.52 animals per km2; cells beyond it are drawn at the cap.</text>
 <text x='8.47' y='169.67' style='font-size: 13.20px; font-weight: bold; font-family: sans;' textLength='38.90px' lengthAdjust='spacingAndGlyphs'>panels</text>
 </g>

@@ -182,7 +182,10 @@ limits and one guide -- which is what `scale_pair()` is.
 ## Bugs found by rendering rather than by reading
 
 The note says three of its defects were invisible in code review and obvious in
-a PNG. Four more were, here.
+a PNG. Seven more were, here -- three of them found by writing the README's
+example figures, which is the first time several arguments had ever been drawn.
+The eighth, bug 10, is the exception: it was found by reading, and only because
+the caption it belongs in was open on the bench for bug 7.
 
 1. **Two legends where there should have been one.** `map_panels()` passed the
    shared *limits* and *transform* down, but each panel still ran
@@ -225,14 +228,111 @@ a PNG. Four more were, here.
    resolve their scales separately, and neither path ran -- so the density
    panel of `dsmfit`'s projection pair capped at its 99th percentile in
    silence, which is the exact thing squishing instead of censoring was meant
-   to prevent. Each panel of a pair now carries its own note. Found drawing
+   to prevent. Each panel of a pair was given its own note. Found drawing
    the first customer's actual figure, not by any test; the regression test
-   and an updated `pair` snapshot now exist.
+   and an updated `pair` snapshot now exist. **That fix was itself wrong --
+   see bug 7.**
 
 6. **The north arrow's label clipped.** Drawn above the arrow, the reserved
    height had to cover a glyph in map units plus a text line in points, and the
    `N` pushed past the top of the panel at some figure sizes and not others. The
    label now goes below the arrow.
+
+7. **The fix for bug 5, overprinted.** Giving each panel of a pair its own
+   caption made the note *present* and not *legible*. A panel caption is laid
+   out inside that panel's width and does not wrap; the note is a full sentence
+   -- "Colour is capped at 2.75 animals per km2; cells beyond it are drawn at
+   the cap." -- and it is far wider than half a figure. The left panel's note
+   ran under the right panel and the right panel's note started on top of it.
+   The two sentences printed over each other and neither could be read.
+
+   The reason this is the ordinary case rather than a corner is `probs`, which
+   caps at the 99th percentile by default: **most real pairs cap on both
+   sides**, so most real pairs drew the collision. It was not caught because
+   the `pair` snapshot was assertable either way -- the test asked whether the
+   caption string existed, which it did, and a human reading the SVG saw grey
+   text under the panels where grey text belonged.
+
+   Both notes now go in one caption under the whole figure, one per line, which
+   is the only place two full sentences fit. Mechanically, both panels' scales
+   are resolved in `map_pair()` via a new `panel_spec()` -- split out of
+   `panel_of()` -- so the figure level can see what each panel decided; the
+   `caption_note` argument is gone. `map_panels()` already did it this way,
+   with one shared scale and therefore one note, which is why it never showed
+   the defect.
+
+   The general lesson matches bug 4's: **a fix verified against the assertion
+   rather than against the picture is not verified.** Bug 5's test asked
+   whether a string was there. The thing that was wrong was where it was drawn.
+
+8. **`map_effort()` ignored `value` and `size`.** Both documented, both
+   accepted, both silently doing nothing: every point drew in one colour at one
+   size. The cause is a ggplot2 rule worth stating outright -- **a fixed
+   aesthetic is either set or absent, and cannot be passed as `NULL`**.
+   `point_layer()` built its call as `colour = if (is.null(md$value))
+   "#215689" else NULL`, which is fine when the value is absent and fatal when
+   it is present: ggplot2 reads `colour = NULL` as a parameter that is there
+   and empty, warns "Ignoring empty aesthetic: `colour`", and drops the
+   *mapping* of that name. The same line for `size`. The parameters are now
+   built conditionally into a list and `do.call`ed, so the argument is not
+   there at all when the aesthetic is mapped.
+
+   Every effort test drew points with neither argument, so the one warning that
+   would have given it away was never raised -- and `build()` in `test-maps.R`
+   uses `expect_silent()`, so it would have caught it on the first call that
+   passed either. Found drawing the README's own example, which is the first
+   time anything asked `map_effort()` to size by group size. Regression test:
+   `test-maps.R`, "effort actually varies colour and size, not just accepts
+   them", asserting on the built layer, because the returned object looks
+   correct either way.
+
+9. **`map_panels()`'s collected legend, sized for the wrong orientation.** Bug
+   3 again, reached from the other side, and the same lesson did not transfer
+   the first time. `theme_fancymap_panel()` defaults to a legend along the
+   bottom and sizes the colourbar for a row -- 9pt tall, wide enough to lay a
+   row of labels along. `map_panels()` collects one legend and wants it on the
+   right, and it did that by appending `theme(legend.position = "right")` after
+   the theme was built. Position moved; proportions did not. The shared legend
+   drew as a bar about a centimetre tall with `0.0005`, `0.02`, `2` and
+   `>= 4.54` stacked into roughly two lines of text.
+
+   The fix is to pass `legend = "right"` when the panel theme is *built*, since
+   the theme is the only thing that knows the ratio, and to drop the override.
+   Stated as a rule: **an orientation is an input to the theme, never a
+   correction applied to one.**
+
+   Two things about how this was found are worth keeping. It survived a
+   snapshot -- `panels.svg` recorded the squashed bar as the baseline, so the
+   suite asserted the defect. And the first diagnosis was wrong in the way bug
+   4 warns about: the labels look like they are crowding because the breaks are
+   too close together, so the first two attempts were a taller figure and a
+   different multiplier to move the cap. Neither did anything, because the
+   colourbar is a fixed size in points and does not grow with the figure. What
+   settled it was reading the two key dimensions off the built theme -- 9pt
+   tall by 28.6pt wide, on a legend drawn as a column. Measure the thing before
+   theorising about the thing. Regression test: `test-maps.R`, "the collected
+   legend is sized for the way it is drawn", which asserts the bar is taller
+   than it is wide rather than asserting any particular size.
+
+10. **A pair never carried the land note at all.** Every other verb appends
+    `no_land_note()` to its caption; `map_pair()` never called it. So the one
+    thing this package promises never to leave unsaid -- that a map has no
+    shoreline, and which of the two reasons it has none -- was unsaid on the
+    two-panel figure, which is the figure most likely to be drawn over open
+    water in the first place.
+
+    Found by reading rather than by drawing, and worth recording why the
+    reading worked this time: bug 7 had just moved the pair's captions from the
+    panels to the figure, so the list of notes a pair carries was written out
+    in one place for the first time. It was one item short of every other
+    verb's. A defect that is invisible while the logic is spread across two
+    functions can become obvious the moment it is collected into one -- which
+    is an argument for collecting it beyond the bug that forced it.
+
+    Regression test: `test-maps.R`, "a pair with no land is captioned too",
+    which also pins the note to its own line rather than run onto the end of
+    the second cap note, and keeps `coastline = FALSE` silent -- that is still
+    the one case where nobody expected land.
 
 ---
 

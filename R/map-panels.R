@@ -89,7 +89,16 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
   shared <- pooled_spec(pooled, kind = kind, transform = transform,
                         limits = limits, probs = probs, midpoint = midpoint)
 
+  # `legend = "right"` HERE rather than as a position override at the end.
+  # The panel theme defaults to a legend along the bottom and sizes the
+  # colourbar for it -- 9pt tall and wide enough to lay a row of labels along.
+  # Collecting that into a column on the right kept the row's proportions: a
+  # bar about a centimetre tall with every break label stacked on the next.
+  # Same defect as the colourbar bug in DECISIONS.md, reached from the other
+  # side -- the sizes have to be decided by the orientation the legend is
+  # actually drawn in, and only the theme knows the ratio.
   panel_theme <- theme_fancymap_panel(base_size = base_size,
+                                      legend = "right",
                                       graticule = graticule)
 
   plots <- lapply(seq_along(mds), function(i) {
@@ -128,8 +137,7 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
         plot.caption = ggplot2::element_text(size = base_size * 0.7, hjust = 0,
                                              colour = "grey30")
       )
-    ) &
-    ggplot2::theme(legend.position = "right")
+    )
 }
 
 # The panels, however they were handed over.

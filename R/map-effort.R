@@ -168,16 +168,25 @@ point_layer <- function(md, original, size, base_size) {
     )
   }
 
+  # A fixed aesthetic is either set or ABSENT. It cannot be passed as NULL:
+  # ggplot2 reads `colour = NULL` as a parameter that is present and empty,
+  # warns "Ignoring empty aesthetic", and drops the MAPPING of the same name --
+  # so `value =` drew every point one colour and `size =` drew every point one
+  # size, silently, which is an effort map that has thrown away the thing it
+  # was asked to show. Built conditionally so the argument is not there at all
+  # when the aesthetic is mapped.
+  params <- list(
+    data = data, inherit.aes = FALSE, mapping = mapping,
+    # Points on an effort map overlap by nature -- a survey flies the same
+    # water repeatedly -- so they are drawn part-transparent, and where they
+    # stack the darkening is itself information.
+    alpha = 0.55
+  )
+  if (is.null(md$value)) params$colour <- "#215689"
+  if (is.null(size)) params$size <- 0.8
+
   list(
-    ggplot2::geom_sf(
-      data = data, inherit.aes = FALSE, mapping = mapping,
-      # Points on an effort map overlap by nature -- a survey flies the same
-      # water repeatedly -- so they are drawn part-transparent, and where they
-      # stack the darkening is itself information.
-      alpha = 0.55,
-      colour = if (is.null(md$value)) "#215689" else NULL,
-      size = if (is.null(size)) 0.8 else NULL
-    ),
+    do.call(ggplot2::geom_sf, params),
     if (!is.null(size)) {
       ggplot2::scale_size_area(name = if (is.character(size)) size else NULL,
                                max_size = base_size * 0.35)

@@ -97,6 +97,23 @@ test_that("panels share one scale, so one legend can be collected", {
   expect_equal(fills[[1]]$get_labels(), fills[[3]]$get_labels())
 })
 
+test_that("the collected legend is sized for the way it is drawn", {
+  # The panel theme defaults to a legend along the BOTTOM and sizes the
+  # colourbar for a row: short and wide. map_panels() collects one legend and
+  # puts it on the right, and it used to do that by overriding the position
+  # after the fact -- which left the row's proportions on a column, so the bar
+  # came out about a centimetre tall with the break labels stacked on each
+  # other. The orientation now goes in when the theme is built.
+  g <- example_grid()
+  suppressMessages(p <- map_panels(g, cbind(a = g$density, b = g$density * 3)))
+  th <- p[[1]]$theme
+
+  expect_equal(as.character(th$legend.position), "right")
+  # taller than it is wide, which is what a vertical colourbar is
+  expect_gt(as.numeric(grid::convertHeight(th$legend.key.height, "pt")),
+            as.numeric(grid::convertWidth(th$legend.key.width, "pt")))
+})
+
 test_that("panels take their scale from every panel pooled", {
   g <- example_grid()
   vals <- cbind(a = g$density, b = g$density * 50)
@@ -136,6 +153,38 @@ test_that("effort draws points, and bins them when there are too many", {
   build(p)
 })
 
+test_that("effort actually varies colour and size, not just accepts them", {
+  # `value` and `size` both reached geom_sf() as `colour = NULL` / `size =
+  # NULL` whenever the matching aesthetic was mapped. ggplot2 reads a NULL
+  # parameter as present-and-empty, warns, and drops the mapping -- so both
+  # arguments were accepted, documented, and silently did nothing: every point
+  # one colour, every point one size. The old tests drew effort maps without
+  # either argument, so nothing caught it.
+  #
+  # Asserting on the BUILT layer, because that is the only place the drop is
+  # visible; the returned object looks correct either way.
+  pts <- sf::st_as_sf(
+    data.frame(lon = runif(60, -70.4, -68.1), lat = runif(60, 42.6, 44.3),
+               group = rep(1:6, each = 10)),
+    coords = c("lon", "lat"), crs = 4326)
+
+  points_layer <- function(p) {
+    layers <- build(p)$data
+    layers[[which.max(vapply(layers, nrow, integer(1)))]]
+  }
+
+  sized <- points_layer(map_effort(points = pts, size = "group"))
+  expect_gt(length(unique(sized$size)), 1)
+
+  coloured <- points_layer(map_effort(points = pts, value = "group"))
+  expect_gt(length(unique(coloured$colour)), 1)
+
+  both <- points_layer(map_effort(points = pts, value = "group",
+                                  size = "group"))
+  expect_gt(length(unique(both$size)), 1)
+  expect_gt(length(unique(both$colour)), 1)
+})
+
 test_that("effort needs something to draw", {
   expect_error(map_effort(), "needs")
 })
@@ -160,6 +209,30 @@ test_that("a map with no land drawn is captioned to say so", {
   open_water <- suppressWarnings(
     suppressMessages(map_surface(g, "density", coastline = coastline_fixture()[0, ])))
   expect_match(open_water$labels$caption, "No land")
+})
+
+test_that("a pair with no land is captioned too", {
+  # A pair carried neither land note at all -- every other verb appends one and
+  # this one did not, so the single case the package promises never to leave
+  # unsaid was unsaid on two panels at once.
+  g <- example_grid()
+
+  open_water <- suppressWarnings(suppressMessages(
+    map_pair(g, "density", "cv", labels = c("density", "cv"),
+             coastline = coastline_fixture()[0, ])))
+  expect_match(open_water$patches$annotation$caption, "No land")
+
+  # and the cap notes are still there, each on its own line, with the land
+  # note as a third rather than run onto the end of the second
+  lines <- strsplit(open_water$patches$annotation$caption, "\n", fixed = TRUE)[[1]]
+  expect_length(lines, 3)
+  expect_match(lines[3], "No land")
+
+  # coastline = FALSE stays the one way to get no land and no complaint
+  suppressMessages(deliberate <- map_pair(g, "density", "cv",
+                                          coastline = FALSE))
+  expect_false(grepl("land|coastline",
+                     deliberate$patches$annotation$caption %||% ""))
 })
 
 test_that("hex_surface bins point values into polygons", {
@@ -191,13 +264,36 @@ test_that("hex_surface counts when given no value, and refuses polygons", {
   expect_error(hex_surface(example_grid(), "density"), "bins points")
 })
 
-test_that("a pair's capped panel says so on the panel", {
+test_that("a pair says so when either panel caps, in one caption", {
   # A single map appends the cap note to its caption and map_panels() to the
   # shared one, but a pair's panels resolve their scales separately -- and
-  # without this the capped panel said nothing at all.
+  # without this a capped panel said nothing at all.
+  #
+  # The note goes on the FIGURE, not on the panel. Per-panel captions were the
+  # first fix and they collided: two sentences, each left-aligned under a panel
+  # far narrower than the sentence, overprinted. Both panels capping is the
+  # ordinary case rather than the corner, since `probs` caps at the 99th
+  # percentile by default -- so this asserts both notes survive, and that they
+  # are on separate lines rather than run together past the figure edge.
   g <- example_grid()
   g$density[1] <- 1e6
   suppressMessages(p <- map_pair(g, "density", "cv",
                                  labels = c("density", "cv")))
-  expect_match(p[[1]]$labels$caption, "capped")
+
+  caption <- p$patches$annotation$caption
+  expect_match(caption, "capped at .* density")
+  expect_match(caption, "capped at .* cv")
+  expect_length(strsplit(caption, "\n", fixed = TRUE)[[1]], 2)
+
+  # and nothing is left stranded on a panel
+  expect_null(p[[1]]$labels$caption)
+  expect_null(p[[2]]$labels$caption)
+})
+
+test_that("a pair with nothing capped carries no cap note", {
+  suppressMessages(p <- map_pair(example_grid(), "occupancy", "cv",
+                                 kind = "probability",
+                                 limits = c(0, 1), probs = c(0, 1)))
+  expect_false(grepl("capped", p$patches$annotation$caption %||% "",
+                     fixed = TRUE))
 })

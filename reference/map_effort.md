@@ -168,6 +168,5 @@ pts <- sf::st_as_sf(
   coords = c("lon", "lat"), crs = 4326)
 
 map_effort(points = pts, size = "group", title = "Sightings")
-#> Warning: Ignoring empty aesthetic: `size`.
 
 ```

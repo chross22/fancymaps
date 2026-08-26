@@ -32,6 +32,12 @@ remotes::install_github("chross22/fancymaps")
 
 ## The maps
 
+Every figure below is drawn by the code above it, from
+[`example_grid()`](https://camilleross.org/fancymaps/reference/example_grid.md)
+— a small fixture in the Gulf of Maine carrying one column of each kind
+of quantity this package draws. No fitted model, no covariate product
+and no network.
+
 ``` r
 
 library(fancymaps)
@@ -39,35 +45,133 @@ grid <- example_grid()
 
 # a predicted surface
 map_surface(grid, "density", label = "animals per km2")
+#> scale: log, chosen because the 99th percentile is 170 times the median.
+#>   Pass `transform =` to fix it, if two figures need to match.
+```
+
+![A predicted density surface over the Gulf of Maine: a grid of square
+cells coloured on a log scale from dark blue to yellow, brightest in a
+patch near the coast, with land in grey, a scale bar and a north
+arrow.](reference/figures/README-fancymaps-surface-1.png)
+
+Note what the figure said out loud: the transform was chosen by a rule,
+the rule is reported, the legend names it, and the top break is marked
+`≥` because the top 1% of cells are drawn at the cap rather than
+dropped. That message prints on every call that has to choose; it is
+hidden in the examples below only to keep this page readable.
+
+``` r
 
 # a probability, on a scale fixed at 0 and 1
 map_probability(grid, "occupancy")
+```
+
+![Posterior occupancy over the same grid, coloured on a scale fixed at 0
+and 1 so the legend runs the full range regardless of what the data
+reaches.](reference/figures/README-fancymaps-probability-1.png)
+
+``` r
 
 # something with a meaningful centre -- the midpoint is required
 map_diverging(grid, "mess", midpoint = 0, direction = -1)
+```
+
+![An extrapolation score over the same grid, coloured brown below zero
+and blue above it, with white at zero -- the midpoint that was passed
+rather than
+defaulted.](reference/figures/README-fancymaps-diverging-1.png)
+
+``` r
 
 # a value beside its uncertainty, as one figure
 map_pair(grid, "density", "mess",
          uncertainty_kind = "diverging", uncertainty_direction = -1,
          labels = c("animals per km2", "MESS"))
+```
+
+![Two panels side by side on the same extent: predicted density on the
+left, its extrapolation score on the right, each with its own legend
+below it and one caption under both naming where each scale was
+capped.](reference/figures/README-fancymaps-pair-1.png)
+
+One extent, one coastline, aligned panels, and the scale bar and north
+arrow drawn once — a second of either would measure nothing new.
+
+``` r
 
 # with a locator inset, for saying where in the world this is
 map_surface(grid, "density", inset = TRUE)
+```
+
+![The density surface again, with a small locator inset in the
+bottom-right corner showing the northeastern seaboard and a marker on
+the study area.](reference/figures/README-fancymaps-inset-1.png)
+
+``` r
 
 # furniture goes where the data leaves room for it
 map_surface(grid, "density", north_position = "br", scalebar_position = "bl")
+```
+
+![The density surface with the north arrow moved to the bottom-right
+corner and the scale bar to the
+bottom-left.](reference/figures/README-fancymaps-furniture-1.png)
+
+``` r
 
 # a series, on one shared scale
-map_panels(grid, cbind(spring = grid$density, summer = grid$density * 2.5))
+map_panels(grid, cbind(spring = grid$density, summer = grid$density * 2.5),
+           label = "animals per km2")
+```
+
+![Two panels labelled spring and summer, drawn on one shared colour
+scale with a single legend to the right, so the brighter summer panel is
+brighter because its values are
+larger.](reference/figures/README-fancymaps-panels-1.png)
+
+One legend, because there is one scale. Panels that each resolved their
+own would be four pictures rather than one comparison.
+
+The effort maps want survey data rather than a grid, so the next two
+examples make some up — the package ships only the grid:
+
+``` r
+
+set.seed(1)
+sightings <- sf::st_as_sf(
+  data.frame(lon = runif(300, -70.4, -68.1),
+             lat = runif(300, 42.6, 44.3),
+             group_size = rpois(300, 3) + 1),
+  coords = c("lon", "lat"), crs = 4326)
+
+segments <- sf::st_as_sf(
+  data.frame(lon = runif(900, -70.4, -68.1),
+             lat = runif(900, 42.6, 44.3),
+             resid = rnorm(900, 0.4, 1)),
+  coords = c("lon", "lat"), crs = 4326)
+```
+
+``` r
 
 # survey effort, binned when there is too much of it to draw
 map_effort(points = sightings, size = "group_size")
+```
+
+![Three hundred sighting locations scattered over the Gulf of Maine as
+part-transparent blue circles, sized by group size, with a size legend
+to the right.](reference/figures/README-fancymaps-effort-1.png)
+
+``` r
 
 # binned values as polygons, for whichever scale the quantity needs --
 # residuals, say, which bin like effort but diverge around their own mean
 hex <- hex_surface(segments, "resid", fun = "mean")
 map_diverging(hex, "value", midpoint = mean(hex$value))
 ```
+
+![Deviance residuals binned into hexagons and coloured on a diverging
+scale centred on their own mean rather than on
+zero.](reference/figures/README-fancymaps-hex-1.png)
 
 ## Interactive
 
@@ -85,6 +189,11 @@ leaflet_diverging(grid, "mess", midpoint = 0, direction = -1)
 leaflet_pair(grid, "density", "cv")
 leaflet_panels(grid, seasons, label = "animals per km2")
 ```
+
+These are the one set of examples on this page that are not run: a
+`leaflet` widget is HTML, and a README on GitHub would show it as
+nothing at all. They draw in the [reference
+site](https://camilleross.org/fancymaps/) and in the help pages.
 
 A pair and a series put every layer on one map behind a radio control.
 That is the better interactive form, not a shortcut: switching layers is
@@ -222,7 +331,14 @@ package that no test had:
 [`hex_surface()`](https://camilleross.org/fancymaps/reference/hex_surface.md)
 did not exist, and a capped panel of
 [`map_pair()`](https://camilleross.org/fancymaps/reference/map_pair.md)
-said nothing. `DECISIONS.md` records both.
+said nothing. Drawing the figures on this page caught three more: the
+fix for that second one overprinted its own caption,
+[`map_effort()`](https://camilleross.org/fancymaps/reference/map_effort.md)
+had been ignoring `value` and `size` since it was written, and
+[`map_panels()`](https://camilleross.org/fancymaps/reference/map_panels.md)
+drew its collected legend at the proportions of a legend it was not
+drawing. Fixing those surfaced a fourth by reading — a pair had never
+carried the no-land note at all. `DECISIONS.md` records all six.
 
 ## Documentation
 

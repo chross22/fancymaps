@@ -79,46 +79,76 @@
 <div class="section level2">
 <h2 id="the-maps">The maps<a class="anchor" aria-label="anchor" href="#the-maps"></a>
 </h2>
+<p>Every figure below is drawn by the code above it, from <code><a href="reference/example_grid.html">example_grid()</a></code> — a small fixture in the Gulf of Maine carrying one column of each kind of quantity this package draws. No fitted model, no covariate product and no network.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/chross22/fancymaps" class="external-link">fancymaps</a></span><span class="op">)</span></span>
 <span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/example_grid.html">example_grid</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># a predicted surface</span></span>
 <span><span class="fu"><a href="reference/map_surface.html">map_surface</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"density"</span>, label <span class="op">=</span> <span class="st">"animals per km2"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># a probability, on a scale fixed at 0 and 1</span></span>
-<span><span class="fu"><a href="reference/map_probability.html">map_probability</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"occupancy"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># something with a meaningful centre -- the midpoint is required</span></span>
-<span><span class="fu"><a href="reference/map_diverging.html">map_diverging</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"mess"</span>, midpoint <span class="op">=</span> <span class="fl">0</span>, direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># a value beside its uncertainty, as one figure</span></span>
+<span><span class="co">#&gt; scale: log, chosen because the 99th percentile is 170 times the median.</span></span>
+<span><span class="co">#&gt;   Pass `transform =` to fix it, if two figures need to match.</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-surface-1.png" alt="A predicted density surface over the Gulf of Maine: a grid of square cells coloured on a log scale from dark blue to yellow, brightest in a patch near the coast, with land in grey, a scale bar and a north arrow." width="100%"></p>
+<p>Note what the figure said out loud: the transform was chosen by a rule, the rule is reported, the legend names it, and the top break is marked <code>≥</code> because the top 1% of cells are drawn at the cap rather than dropped. That message prints on every call that has to choose; it is hidden in the examples below only to keep this page readable.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># a probability, on a scale fixed at 0 and 1</span></span>
+<span><span class="fu"><a href="reference/map_probability.html">map_probability</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"occupancy"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-probability-1.png" alt="Posterior occupancy over the same grid, coloured on a scale fixed at 0 and 1 so the legend runs the full range regardless of what the data reaches." width="100%"></p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># something with a meaningful centre -- the midpoint is required</span></span>
+<span><span class="fu"><a href="reference/map_diverging.html">map_diverging</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"mess"</span>, midpoint <span class="op">=</span> <span class="fl">0</span>, direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-diverging-1.png" alt="An extrapolation score over the same grid, coloured brown below zero and blue above it, with white at zero -- the midpoint that was passed rather than defaulted." width="100%"></p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># a value beside its uncertainty, as one figure</span></span>
 <span><span class="fu"><a href="reference/map_pair.html">map_pair</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"density"</span>, <span class="st">"mess"</span>,</span>
 <span>         uncertainty_kind <span class="op">=</span> <span class="st">"diverging"</span>, uncertainty_direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
-<span>         labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"animals per km2"</span>, <span class="st">"MESS"</span><span class="op">)</span><span class="op">)</span></span>
+<span>         labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"animals per km2"</span>, <span class="st">"MESS"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-pair-1.png" alt="Two panels side by side on the same extent: predicted density on the left, its extrapolation score on the right, each with its own legend below it and one caption under both naming where each scale was capped." width="100%"></p>
+<p>One extent, one coastline, aligned panels, and the scale bar and north arrow drawn once — a second of either would measure nothing new.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># with a locator inset, for saying where in the world this is</span></span>
+<span><span class="fu"><a href="reference/map_surface.html">map_surface</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"density"</span>, inset <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-inset-1.png" alt="The density surface again, with a small locator inset in the bottom-right corner showing the northeastern seaboard and a marker on the study area." width="100%"></p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># furniture goes where the data leaves room for it</span></span>
+<span><span class="fu"><a href="reference/map_surface.html">map_surface</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"density"</span>, north_position <span class="op">=</span> <span class="st">"br"</span>, scalebar_position <span class="op">=</span> <span class="st">"bl"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-furniture-1.png" alt="The density surface with the north arrow moved to the bottom-right corner and the scale bar to the bottom-left." width="100%"></p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># a series, on one shared scale</span></span>
+<span><span class="fu"><a href="reference/map_panels.html">map_panels</a></span><span class="op">(</span><span class="va">grid</span>, <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>spring <span class="op">=</span> <span class="va">grid</span><span class="op">$</span><span class="va">density</span>, summer <span class="op">=</span> <span class="va">grid</span><span class="op">$</span><span class="va">density</span> <span class="op">*</span> <span class="fl">2.5</span><span class="op">)</span>,</span>
+<span>           label <span class="op">=</span> <span class="st">"animals per km2"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-panels-1.png" alt="Two panels labelled spring and summer, drawn on one shared colour scale with a single legend to the right, so the brighter summer panel is brighter because its values are larger." width="100%"></p>
+<p>One legend, because there is one scale. Panels that each resolved their own would be four pictures rather than one comparison.</p>
+<p>The effort maps want survey data rather than a grid, so the next two examples make some up — the package ships only the grid:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">sightings</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>lon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">300</span>, <span class="op">-</span><span class="fl">70.4</span>, <span class="op">-</span><span class="fl">68.1</span><span class="op">)</span>,</span>
+<span>             lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">42.6</span>, <span class="fl">44.3</span><span class="op">)</span>,</span>
+<span>             group_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># with a locator inset, for saying where in the world this is</span></span>
-<span><span class="fu"><a href="reference/map_surface.html">map_surface</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"density"</span>, inset <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># furniture goes where the data leaves room for it</span></span>
-<span><span class="fu"><a href="reference/map_surface.html">map_surface</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"density"</span>, north_position <span class="op">=</span> <span class="st">"br"</span>, scalebar_position <span class="op">=</span> <span class="st">"bl"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># a series, on one shared scale</span></span>
-<span><span class="fu"><a href="reference/map_panels.html">map_panels</a></span><span class="op">(</span><span class="va">grid</span>, <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>spring <span class="op">=</span> <span class="va">grid</span><span class="op">$</span><span class="va">density</span>, summer <span class="op">=</span> <span class="va">grid</span><span class="op">$</span><span class="va">density</span> <span class="op">*</span> <span class="fl">2.5</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># survey effort, binned when there is too much of it to draw</span></span>
-<span><span class="fu"><a href="reference/map_effort.html">map_effort</a></span><span class="op">(</span>points <span class="op">=</span> <span class="va">sightings</span>, size <span class="op">=</span> <span class="st">"group_size"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># binned values as polygons, for whichever scale the quantity needs --</span></span>
+<span><span class="va">segments</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>lon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">900</span>, <span class="op">-</span><span class="fl">70.4</span>, <span class="op">-</span><span class="fl">68.1</span><span class="op">)</span>,</span>
+<span>             lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">900</span>, <span class="fl">42.6</span>, <span class="fl">44.3</span><span class="op">)</span>,</span>
+<span>             resid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">900</span>, <span class="fl">0.4</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># survey effort, binned when there is too much of it to draw</span></span>
+<span><span class="fu"><a href="reference/map_effort.html">map_effort</a></span><span class="op">(</span>points <span class="op">=</span> <span class="va">sightings</span>, size <span class="op">=</span> <span class="st">"group_size"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-effort-1.png" alt="Three hundred sighting locations scattered over the Gulf of Maine as part-transparent blue circles, sized by group size, with a size legend to the right." width="100%"></p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># binned values as polygons, for whichever scale the quantity needs --</span></span>
 <span><span class="co"># residuals, say, which bin like effort but diverge around their own mean</span></span>
 <span><span class="va">hex</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/hex_surface.html">hex_surface</a></span><span class="op">(</span><span class="va">segments</span>, <span class="st">"resid"</span>, fun <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/map_diverging.html">map_diverging</a></span><span class="op">(</span><span class="va">hex</span>, <span class="st">"value"</span>, midpoint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">hex</span><span class="op">$</span><span class="va">value</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fancymaps-hex-1.png" alt="Deviance residuals binned into hexagons and coloured on a diverging scale centred on their own mean rather than on zero." width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="interactive">Interactive<a class="anchor" aria-label="anchor" href="#interactive"></a>
 </h2>
 <p>The same maps as <code>leaflet</code> widgets — pan, zoom, click a cell for its value:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/leaflet-maps.html">leaflet_surface</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"density"</span>, label <span class="op">=</span> <span class="st">"animals per km2"</span>,</span>
 <span>                popup <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"depth"</span>, <span class="st">"sst"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/leaflet-maps.html">leaflet_probability</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"occupancy"</span><span class="op">)</span></span>
@@ -127,6 +157,7 @@
 <span><span class="co"># a pair and a series become a switch rather than two maps</span></span>
 <span><span class="fu"><a href="reference/leaflet_pair.html">leaflet_pair</a></span><span class="op">(</span><span class="va">grid</span>, <span class="st">"density"</span>, <span class="st">"cv"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/leaflet_panels.html">leaflet_panels</a></span><span class="op">(</span><span class="va">grid</span>, <span class="va">seasons</span>, label <span class="op">=</span> <span class="st">"animals per km2"</span><span class="op">)</span></span></code></pre></div>
+<p>These are the one set of examples on this page that are not run: a <code>leaflet</code> widget is HTML, and a README on GitHub would show it as nothing at all. They draw in the <a href="https://camilleross.org/fancymaps/">reference site</a> and in the help pages.</p>
 <p>A pair and a series put every layer on one map behind a radio control. That is the better interactive form, not a shortcut: switching layers is a blink comparison — same cells, same position, same zoom — so nothing needs aligning because nothing moved. The static <code><a href="reference/map_pair.html">map_pair()</a></code> and <code><a href="reference/map_panels.html">map_panels()</a></code> remain the answer when both have to be visible at once.</p>
 <p>These exist for the <strong>decisions</strong>, not the rendering — <code>leaflet</code> does that perfectly well on its own. Handing it a grid directly means re-deciding the scale at the call site, and <code><a href="https://rstudio.github.io/leaflet/reference/colorNumeric.html" class="external-link">leaflet::colorNumeric()</a></code> decides differently: linear, over the full data range, with no capping. The static figure and the interactive one then show the same numbers in different colours. These reuse the same scale objects, and the test suite asserts the two agree at exact hex equality, cell for cell.</p>
 <p>One thing to know: land comes from the tile provider, so unlike every static map here, <strong>these need the network at draw time</strong>.</p>
@@ -142,7 +173,7 @@
 <li>a plain data frame with coordinate columns — which is the form model output usually arrives in, since <code>mgcv</code> and <code>dsm</code> want geometry dropped and a prediction rejoined afterwards.</li>
 </ul>
 <p>Values may sit on the object as a column, or arrive separately and be joined by an identifier:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># a posterior summary, keyed by cell id</span></span>
 <span><span class="va">occupancy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">posterior_z</span><span class="op">)</span>, <span class="va">grid</span><span class="op">$</span><span class="va">grid_id</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/map_probability.html">map_probability</a></span><span class="op">(</span><span class="va">grid</span>, <span class="va">occupancy</span>, by <span class="op">=</span> <span class="st">"grid_id"</span><span class="op">)</span></span></code></pre></div>
@@ -173,7 +204,7 @@
 <div class="section level2">
 <h2 id="in-use">In use<a class="anchor" aria-label="anchor" href="#in-use"></a>
 </h2>
-<p><a href="https://github.com/chross22/dsmfit" class="external-link"><code>dsmfit</code></a>, the distance-sampling pipeline this package was specified against, now draws its maps through it: the projection-and-extrapolation pair, the binned residual map, and the spatial partial effect. Every figure that repository’s requirements note listed as hand-drawn and wrong in a named way is drawn by a tested function here instead — and converting it caught two defects in this package that no test had: <code><a href="reference/hex_surface.html">hex_surface()</a></code> did not exist, and a capped panel of <code><a href="reference/map_pair.html">map_pair()</a></code> said nothing. <code>DECISIONS.md</code> records both.</p>
+<p><a href="https://github.com/chross22/dsmfit" class="external-link"><code>dsmfit</code></a>, the distance-sampling pipeline this package was specified against, now draws its maps through it: the projection-and-extrapolation pair, the binned residual map, and the spatial partial effect. Every figure that repository’s requirements note listed as hand-drawn and wrong in a named way is drawn by a tested function here instead — and converting it caught two defects in this package that no test had: <code><a href="reference/hex_surface.html">hex_surface()</a></code> did not exist, and a capped panel of <code><a href="reference/map_pair.html">map_pair()</a></code> said nothing. Drawing the figures on this page caught three more: the fix for that second one overprinted its own caption, <code><a href="reference/map_effort.html">map_effort()</a></code> had been ignoring <code>value</code> and <code>size</code> since it was written, and <code><a href="reference/map_panels.html">map_panels()</a></code> drew its collected legend at the proportions of a legend it was not drawing. Fixing those surfaced a fourth by reading — a pair had never carried the no-land note at all. <code>DECISIONS.md</code> records all six.</p>
 </div>
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
@@ -192,7 +223,7 @@
 <div class="section level2">
 <h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span><span class="op">)</span>                 <span class="co"># includes 14 vdiffr snapshots</span></span>
 <span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/snapshot_accept.html" class="external-link">snapshot_review</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># look at any figure that changed</span></span></code></pre></div>
 <p>Snapshot baselines are platform-specific — svglite records text widths from system font metrics — so a first run elsewhere reports typography diffs rather than regressions. See <code>DECISIONS.md</code>.</p>

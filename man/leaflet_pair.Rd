@@ -21,7 +21,7 @@ leaflet_pair(
   limits = NULL,
   probs = c(0, 0.99),
   popup = NULL,
-  tiles = "CartoDB.Positron",
+  tiles = "Esri.WorldGrayCanvas",
   opacity = 0.8,
   position = "topright"
 )
@@ -69,8 +69,9 @@ character vector. The value and the join key are always shown. \code{FALSE}
 turns popups off.}
 
 \item{tiles}{A \pkg{leaflet} provider name for the basemap, or \code{NULL} for no
-basemap at all. The default is a quiet grey one, so the data is the
-brightest thing on the map rather than competing with a road network.}
+basemap at all. The default is \code{"Esri.WorldGrayCanvas"}, a quiet grey one,
+so the data is the brightest thing on the map rather than competing with a
+road network. It is also key-free: see the note on \code{leaflet_base()}.}
 
 \item{opacity}{How opaque the cells are over the basemap.}
 

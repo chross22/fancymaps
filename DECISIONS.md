@@ -497,6 +497,17 @@ be computed two ways. Asserted period for period at exact hex equality.
   rather than an argument to the existing ones.
 * **The north arrow.** Meaningless on a map you can pan but not rotate.
 
+**The default basemap has to be key-free.** It was `CartoDB.Positron` until
+CARTO put its basemaps behind an API key; unauthenticated requests now return
+placeholder tiles reading "API KEY REQUIRED", so every interactive map drew
+that text tiled across itself. Seen in a browser on 2026-08-26, not by a test
+-- the widget was structurally correct and the map was wrong, the same failure
+mode as the legend and the layer control above. The default is now
+`Esri.WorldGrayCanvas`, the nearest key-free match to the quiet grey the
+documentation promises. `Esri.OceanBasemap` suits marine work better and is not
+grey, so it is a good thing to pass and a bad thing to default to. Whatever
+replaces it must draw without a key: nothing in this package can supply one.
+
 Verified against the real `dsmfit` grid in a browser: 1,167 cells, tiles
 loading, legend reading `>= 0.879`, and all 1,167 popups bound with the value
 and the requested covariates. The click-to-open interaction could not be

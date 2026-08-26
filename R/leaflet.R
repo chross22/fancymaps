@@ -44,8 +44,9 @@
 #'   character vector. The value and the join key are always shown. `FALSE`
 #'   turns popups off.
 #' @param tiles A \pkg{leaflet} provider name for the basemap, or `NULL` for no
-#'   basemap at all. The default is a quiet grey one, so the data is the
-#'   brightest thing on the map rather than competing with a road network.
+#'   basemap at all. The default is `"Esri.WorldGrayCanvas"`, a quiet grey one,
+#'   so the data is the brightest thing on the map rather than competing with a
+#'   road network. It is also key-free: see the note on `leaflet_base()`.
 #' @param opacity How opaque the cells are over the basemap.
 #' @param legend Whether to draw the legend.
 #'
@@ -97,7 +98,7 @@ NULL
 leaflet_surface <- function(x, value = NULL, by = NULL, coords = NULL,
                             crs = NULL, label = NULL, transform = "auto",
                             limits = NULL, probs = c(0, 0.99), popup = NULL,
-                            tiles = "CartoDB.Positron", opacity = 0.8,
+                            tiles = "Esri.WorldGrayCanvas", opacity = 0.8,
                             legend = TRUE) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
@@ -114,7 +115,7 @@ leaflet_surface <- function(x, value = NULL, by = NULL, coords = NULL,
 #' @export
 leaflet_probability <- function(x, value = NULL, by = NULL, coords = NULL,
                                 crs = NULL, label = NULL, limits = c(0, 1),
-                                popup = NULL, tiles = "CartoDB.Positron",
+                                popup = NULL, tiles = "Esri.WorldGrayCanvas",
                                 opacity = 0.8, legend = TRUE) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
@@ -134,7 +135,7 @@ leaflet_diverging <- function(x, value = NULL, midpoint, by = NULL,
                               coords = NULL, crs = NULL, label = NULL,
                               limits = NULL, probs = c(0.01, 0.99),
                               direction = 1, popup = NULL,
-                              tiles = "CartoDB.Positron", opacity = 0.8,
+                              tiles = "Esri.WorldGrayCanvas", opacity = 0.8,
                               legend = TRUE) {
   label <- label %||% value_label(rlang::enquo(value), value)
   md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
@@ -156,7 +157,7 @@ leaflet_diverging <- function(x, value = NULL, midpoint, by = NULL,
 }
 
 assemble_leaflet <- function(md, spec, palette, direction = 1, popup = NULL,
-                             tiles = "CartoDB.Positron", opacity = 0.8,
+                             tiles = "Esri.WorldGrayCanvas", opacity = 0.8,
                              legend = TRUE, by = NULL) {
   m <- leaflet_base(tiles)
   m <- add_md_layer(m, md, spec, palette, direction, opacity, popup = popup,
@@ -168,6 +169,14 @@ assemble_leaflet <- function(md, spec, palette, direction = 1, popup = NULL,
   m
 }
 
+# The default basemap must be one that draws without an API key. CARTO's
+# Positron -- the previous default -- now returns placeholder tiles reading
+# "API KEY REQUIRED" to unauthenticated callers, which tiled that text across
+# every interactive map this package drew (confirmed in a browser, 2026-08-26).
+# "Esri.WorldGrayCanvas" is the nearest key-free equivalent of the quiet grey
+# the docs promise. Do not switch back to a provider that needs a key: nothing
+# here can supply one, and the failure is silent -- the widget builds, the
+# tiles load, and the map is simply wrong.
 leaflet_base <- function(tiles) {
   check_leaflet()
   m <- leaflet::leaflet(options = leaflet::leafletOptions(minZoom = 3))
@@ -383,7 +392,7 @@ leaflet_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
                          uncertainty_midpoint = 0, uncertainty_direction = 1,
                          labels = NULL, transform = "auto", limits = NULL,
                          probs = c(0, 0.99), popup = NULL,
-                         tiles = "CartoDB.Positron", opacity = 0.8,
+                         tiles = "Esri.WorldGrayCanvas", opacity = 0.8,
                          position = "topright") {
   kind <- match.arg(kind)
   uncertainty_kind <- match.arg(uncertainty_kind)
@@ -474,7 +483,7 @@ leaflet_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
                            midpoint = NULL, direction = 1, label = NULL,
                            transform = "auto", limits = NULL,
                            probs = c(0, 0.99), popup = NULL,
-                           tiles = "CartoDB.Positron", opacity = 0.8,
+                           tiles = "Esri.WorldGrayCanvas", opacity = 0.8,
                            legend = TRUE, position = "topright") {
   kind <- match.arg(kind)
   panels <- panel_values(x, values)

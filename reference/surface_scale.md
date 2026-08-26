@@ -92,8 +92,8 @@ surface_scale(skewed)
 #>     lab[at_top] <- paste0("≥ ", lab[at_top])
 #>     lab
 #> }
-#> <bytecode: 0x56025046d858>
-#> <environment: 0x56025bec18d0>
+#> <bytecode: 0x559ebe433778>
+#> <environment: 0x559ebbb9ee00>
 #> 
 #> $squished
 #> [1] TRUE
@@ -127,8 +127,8 @@ surface_scale(runif(100, 8, 12))
 #>     lab[at_top] <- paste0("≥ ", lab[at_top])
 #>     lab
 #> }
-#> <bytecode: 0x56025046d858>
-#> <environment: 0x560253c24500>
+#> <bytecode: 0x559ebe433778>
+#> <environment: 0x559ebbafa320>
 #> 
 #> $squished
 #> [1] TRUE

@@ -6,5 +6,6 @@
 ^DECISIONS\.md$
 ^README\.Rmd$
 ^_pkgdown\.yml$
+^pkgdown$
 ^pkgdown-site$
 ^\.claude$

@@ -1,0 +1,223 @@
+---
+title: "From model output to figure"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{From model output to figure}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>",
+  fig.width = 6, fig.height = 5, dpi = 120, fig.align = "center"
+)
+library(fancymaps)
+
+# Pinned so this vignette builds the same figures everywhere. The example grid
+# is 194 km across, just under the 200 km where coastline() starts asking for a
+# 1:10m shoreline -- so left alone it would draw a different coastline
+# depending on which optional packages the building machine happens to have.
+land <- coastline_fixture()
+grid <- example_grid()
+```
+
+A spatial model ends in a handful of figures: the predicted surface, that
+surface beside its uncertainty, the same surface across seasons, and the
+effort that produced the data. This vignette walks that pipeline once, from
+the forms model output actually arrives in to the figures a manuscript
+carries, and ends with the two mistakes that the first pipeline to adopt this
+package made -- both of them upstream of the package, and both worth knowing
+about before they cost you an afternoon.
+
+Everything here draws from `example_grid()`, a small `sf` grid in the Gulf of
+Maine with one column of each kind of quantity these models emit, and from
+`coastline_fixture()`, a bundled shoreline. Substitute your own grid and the
+calls do not change.
+
+## The forms output arrives in
+
+Model output reaches the figure stage in one of three shapes, and
+[`as_map_data()`] -- called for you by every map function -- accepts each of
+them.
+
+**An `sf` object with the predictions as columns.** The tidiest case, and the
+one `example_grid()` is in:
+
+```{r sf-form}
+grid
+```
+
+**A plain data frame with coordinate columns.** What remains once geometry has
+been dropped for modelling, which is most modelling. Two numeric columns say
+nothing about whether they are degrees or metres, so `crs` is required rather
+than guessed:
+
+```{r df-form, message = FALSE}
+proj <- equal_area_crs(grid)
+centres <- sf::st_centroid(sf::st_geometry(sf::st_transform(grid, proj)))
+
+flat <- data.frame(sf::st_coordinates(centres), density = grid$density)
+head(flat, 3)
+
+map_surface(flat, "density", coords = c("X", "Y"), crs = proj,
+            label = "animals per km2", coastline = land)
+```
+
+**A named vector keyed by cell id.** The form a posterior summary or a lookup
+table arrives in -- values computed elsewhere, matched back to the grid by
+`by`:
+
+```{r keyed-form, message = FALSE}
+posterior_mean <- setNames(grid$density * 1.1, grid$grid_id)
+
+map_surface(grid, posterior_mean, by = "grid_id",
+            label = "posterior mean density", coastline = land)
+```
+
+The join is checked: every name must be found in the `by` column, and a
+missing key stops the call rather than leaving a hole. A partial join produces
+a map with gaps that looks exactly like a region where the model had nothing
+to say, and nobody catches that by looking.
+
+To see what a map will draw before it draws it, call `as_map_data()` yourself:
+
+```{r inspect}
+as_map_data(grid, "density")
+```
+
+## The deliverable
+
+```{r surface, message = TRUE}
+map_surface(grid, "density", label = "animals per km2",
+            coastline = land,
+            title = "Predicted density",
+            caption = "Example fixture; summer period, no availability correction.")
+```
+
+Note what happened without being asked: the projection was chosen and applied
+to every layer, the scale went logarithmic because the data are skewed -- and
+said so, both in the console and in the legend -- and the top percentile was
+capped, with the top break marked `≥` rather than the bright cells being
+dropped. `vignette("scales")` is the full argument for each of those choices;
+the short version is that anything the figure had to decide is reported on the
+figure, where a reader can see it.
+
+The caption is where provenance belongs -- which period, which product, which
+correction was not applied -- and anything the function had to decide is
+appended to it rather than replacing it.
+
+## The value beside its uncertainty
+
+A predicted surface without its uncertainty is half a claim. [`map_pair()`]
+draws the two as one figure: same extent, same projection, same coastline,
+aligned panels, furniture once.
+
+```{r pair, message = FALSE, fig.width = 8, fig.height = 4.5}
+map_pair(grid, "density", "cv",
+         labels = c("animals per km2", "CV"),
+         titles = c("Predicted density", "How uncertain"),
+         coastline = land)
+```
+
+The legends stay separate on purpose -- density and CV are different
+quantities in different units, and a shared ramp would be a lie. What the
+panels share is extent, projection, position, size and typography, which is
+what makes the pairing read as one figure.
+
+When the uncertainty is a signed score rather than a spread -- an
+extrapolation surface, say -- the right panel diverges instead:
+
+```{r pair-mess, message = FALSE, fig.width = 8, fig.height = 4.5}
+map_pair(grid, "density", "mess",
+         uncertainty_kind = "diverging", uncertainty_direction = -1,
+         labels = c("animals per km2", "MESS"),
+         titles = c("Predicted density", "How familiar these conditions are"),
+         coastline = land)
+```
+
+## The series
+
+Panels drawn separately cannot be compared and look as though they can: each
+one stretches its own range across the full ramp, and the bright patch in a
+sparse year is drawn in the same yellow as the bright patch in an abundant
+one. [`map_panels()`] puts every panel on one scale with one legend, which is
+the only arrangement in which "brighter" means "more".
+
+```{r panels, message = FALSE, fig.width = 7, fig.height = 3.2}
+seasons <- cbind(spring = grid$density,
+                 summer = grid$density * 2.5,
+                 autumn = grid$density * 0.4)
+
+map_panels(grid, seasons, label = "animals per km2", coastline = land)
+```
+
+The matrix form -- one row per cell, one column per period, column names
+becoming titles -- is the shape an averaging or posterior step emits, so
+usually nothing needs reshaping.
+
+## The effort
+
+The map that answers "where did you look", which reviewers ask for and
+pipelines draw last:
+
+```{r effort, message = FALSE}
+set.seed(11)
+midpoints <- sf::st_as_sf(
+  data.frame(lon = stats::runif(200, -70.3, -68.2),
+             lat = stats::runif(200, 42.7, 44.2)),
+  coords = c("lon", "lat"), crs = 4326)
+
+map_effort(points = midpoints, bin = TRUE, bins = 15, coastline = land)
+```
+
+## The two coordinate-system questions
+
+A map involves two different CRS questions, answered by two different
+functions on purpose.
+
+**What is the map drawn in?** [`display_crs()`] decides once per figure and
+applies the answer to every layer. Projected data keeps its own projection --
+if the analysis was in UTM 19N, reprojecting for the figure alone would draw
+something slightly other than what was fitted. Geographic data is projected to
+a Lambert azimuthal equal-area centred on the data, because drawing raw
+lon/lat is what makes a northern study area look stretched.
+
+**What are areas measured in?** [`equal_area_crs()`] and [`area_km2()`], for
+the abundance-by-region arithmetic, which should never be done in whatever CRS
+happened to be convenient for display.
+
+The one thing worth doing deliberately: when a manuscript carries several
+maps, pass the same `crs` to all of them, for the same reason you would fix
+`transform` and `limits` -- figures that are going to be compared should not
+each resolve their own defaults.
+
+## Two mistakes to make only once
+
+Both were made by the first pipeline that adopted this package, both are
+upstream of anything a map function can check, and both produced figures that
+looked fine.
+
+**Annotating a finished map with `geom_sf()` silently discards the extent.**
+A returned map carries a `coord_sf()` holding the resolved projection and the
+fixed extent; adding another `geom_sf` layer replaces that coordinate system
+and the map quietly re-fits its limits to the union of the data. Annotate with
+`geom_point()` or `geom_text()` in the display CRS's own units instead -- or,
+for a study-area outline, pass `region =`, which exists so the common case
+never meets this problem.
+
+**A model frame in kilometres has to be multiplied back before mapping.**
+Pipelines rescale coordinates to kilometres for numerical stability, and a
+grid whose "metres" are actually kilometres draws a map one thousandth the
+size -- with a scale bar labelled in units that make it look plausible,
+because 400 is a believable number in either unit. Nothing downstream can
+catch this; the fix is a comment at the rescaling site and a glance at the
+scale bar on the first figure.
+
+## Where to next
+
+* `vignette("scales")` -- why the colour scales do what they do, and how to
+  override each decision.
+* [`leaflet_surface()`] and friends -- the same maps as interactive widgets,
+  built from the same scale objects so a cell is the same colour in both
+  renderers.

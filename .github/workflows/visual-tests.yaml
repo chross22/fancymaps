@@ -87,7 +87,17 @@ jobs:
         run: rm -rf tests/testthat/_snaps/linux
 
       - name: Run visual tests
+        if: ${{ !inputs.regenerate }}
         run: testthat::test_local(filter = "visual", stop_on_failure = TRUE)
+        shell: Rscript {0}
+
+      # On CI, testthat reports every newly written snapshot as a failure --
+      # which on a record run is the recording happening, not a defect. So
+      # this step does not stop on failures; whether it worked is judged by
+      # the upload below finding the files.
+      - name: Record fresh baselines
+        if: ${{ inputs.regenerate }}
+        run: testthat::test_local(filter = "visual", stop_on_failure = FALSE)
         shell: Rscript {0}
 
       - name: Upload fresh baselines
@@ -96,6 +106,7 @@ jobs:
         with:
           name: linux-baselines
           path: tests/testthat/_snaps/linux
+          if-no-files-found: error
 
       - name: Upload snapshot diffs
         if: failure()

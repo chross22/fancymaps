@@ -11,13 +11,13 @@ Source:
 [`DESCRIPTION`](https://github.com/chross22/fancymaps/blob/master/DESCRIPTION)
 
 Ross C (2026). *fancymaps: Publication-Ready Maps for Spatial Model
-Output*. R package version 0.0.0.9000,
+Output*. R package version 0.1.0,
 <https://github.com/chross22/fancymaps>.
 
     @Manual{,
       title = {fancymaps: Publication-Ready Maps for Spatial Model Output},
       author = {Camille Ross},
       year = {2026},
-      note = {R package version 0.0.0.9000},
+      note = {R package version 0.1.0},
       url = {https://github.com/chross22/fancymaps},
     }

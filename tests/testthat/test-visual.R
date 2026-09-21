@@ -23,10 +23,17 @@
 # A NOTE ON PLATFORMS. These snapshots are SVG, and svglite writes text with
 # positions resolved from the system's font metrics -- so a first run on a
 # machine whose fonts differ from the one the baselines were generated on
-# reports diffs that are typography, not regressions. The baselines here were
-# generated on macOS with R 4.6.1, vdiffr 1.0.9 and svglite 2.2.2. Continuous
-# integration should pin one image and regenerate on that image once, rather
-# than accepting whichever platform ran last.
+# reports diffs that are typography, not regressions. The baselines are
+# therefore kept per platform, as vdiffr variants:
+#
+# * `_snaps/visual/` (no variant) is the local set, generated wherever a human
+#   runs the suite -- currently macOS, R 4.6.1, vdiffr 1.0.9, svglite 2.2.2.
+# * `_snaps/linux/visual/` is the CI set, generated on the pinned image in
+#   `.github/workflows/visual-tests.yaml`, which sets
+#   `FANCYMAPS_VISUAL_VARIANT=linux` to select it. On a CI machine with no
+#   variant named -- R CMD check on an arbitrary runner -- these tests skip,
+#   because comparing against the wrong platform's fonts reports typography,
+#   not regressions.
 #
 # That caveat is why these are additional to the rest of the suite and not a
 # replacement for any of it: the properties that must hold everywhere are
@@ -34,13 +41,17 @@
 # than against pixels.
 
 skip_on_cran()
-# Skipped on CI for the platform reason above: the baselines are macOS font
-# metrics, and every Linux or Windows runner would fail them on typography
-# rather than on regressions. They run wherever a human is -- which is where
-# the "render it and look" convention lives anyway. Regenerating the baselines
-# on one pinned CI image and dropping this skip is the upgrade path.
-skip_on_ci()
 skip_if_not_installed("vdiffr")
+
+variant <- Sys.getenv("FANCYMAPS_VISUAL_VARIANT")
+variant <- if (nzchar(variant)) variant else NULL
+skip_if(is.null(variant) && isTRUE(as.logical(Sys.getenv("CI"))),
+        paste("On CI, visual baselines are per-image: set",
+              "FANCYMAPS_VISUAL_VARIANT (see .github/workflows/visual-tests.yaml)"))
+
+expect_map <- function(title, fig) {
+  vdiffr::expect_doppelganger(title, fig, variant = variant)
+}
 
 # The coastline is pinned to the bundled fixture in every one of these, and it
 # is not a detail.
@@ -61,13 +72,13 @@ test_that("a predicted surface looks right", {
   suppressMessages(
     p <- map_surface(grid, "density", label = "animals per km2",
                      title = "Predicted density", coastline = fixture))
-  vdiffr::expect_doppelganger("surface", p)
+  expect_map("surface", p)
 })
 
 test_that("a surface on a fixed linear scale looks right", {
   p <- map_surface(grid, "density", transform = "identity",
                    limits = c(0, 3), coastline = fixture)
-  vdiffr::expect_doppelganger("surface-linear", p)
+  expect_map("surface-linear", p)
 })
 
 test_that("a probability looks right", {
@@ -75,14 +86,14 @@ test_that("a probability looks right", {
   # like a cell at 0.
   p <- map_probability(grid, "occupancy", label = "occupancy",
                        coastline = fixture)
-  vdiffr::expect_doppelganger("probability", p)
+  expect_map("probability", p)
 })
 
 test_that("a diverging surface looks right in both directions", {
-  vdiffr::expect_doppelganger(
+  expect_map(
     "diverging", map_diverging(grid, "mess", midpoint = 0, label = "MESS",
                                coastline = fixture))
-  vdiffr::expect_doppelganger(
+  expect_map(
     "diverging-reversed",
     map_diverging(grid, "mess", midpoint = 0, direction = -1, label = "MESS",
                   coastline = fixture))
@@ -93,7 +104,7 @@ test_that("a diverging surface centred off zero looks right", {
   # instead.
   p <- map_diverging(grid, "residual", midpoint = mean(grid$residual),
                      label = "deviance residual", coastline = fixture)
-  vdiffr::expect_doppelganger("diverging-off-centre", p)
+  expect_map("diverging-off-centre", p)
 })
 
 test_that("a pair looks right", {
@@ -105,7 +116,7 @@ test_that("a pair looks right", {
                   labels = c("animals per km2", "MESS"),
                   titles = c("Predicted density", "How familiar"),
                   coastline = fixture))
-  vdiffr::expect_doppelganger("pair", p)
+  expect_map("pair", p)
 })
 
 test_that("panels look right, with one collected legend", {
@@ -117,7 +128,7 @@ test_that("panels look right, with one collected legend", {
   suppressMessages(
     p <- map_panels(grid, vals, label = "animals per km2",
                     coastline = fixture))
-  vdiffr::expect_doppelganger("panels", p)
+  expect_map("panels", p)
 })
 
 test_that("effort looks right, drawn and binned", {
@@ -127,12 +138,12 @@ test_that("effort looks right, drawn and binned", {
                lat = stats::runif(200, 42.7, 44.2)),
     coords = c("lon", "lat"), crs = 4326)
 
-  vdiffr::expect_doppelganger(
+  expect_map(
     "effort-points", map_effort(points = pts, coastline = fixture))
   suppressMessages(
     binned <- map_effort(points = pts, bin = TRUE, bins = 15,
                          coastline = fixture))
-  vdiffr::expect_doppelganger("effort-binned", binned)
+  expect_map("effort-binned", binned)
 })
 
 test_that("the locator inset looks right", {
@@ -141,25 +152,25 @@ test_that("the locator inset looks right", {
   suppressMessages(
     p <- map_surface(grid, "density", coastline = fixture, inset = fixture,
                      north = FALSE))
-  vdiffr::expect_doppelganger("inset", p)
+  expect_map("inset", p)
 })
 
 test_that("furniture goes where it is placed", {
   suppressMessages(
     p <- map_surface(grid, "density", coastline = fixture,
                      scalebar_position = "tr", north_position = "bl"))
-  vdiffr::expect_doppelganger("furniture-moved", p)
+  expect_map("furniture-moved", p)
 })
 
 test_that("a graticule looks right when it is asked for", {
   suppressMessages(
     p <- map_surface(grid, "density", coastline = fixture, graticule = TRUE))
-  vdiffr::expect_doppelganger("graticule", p)
+  expect_map("graticule", p)
 })
 
 test_that("a map with no land looks right", {
   # Captioned, so a reader can tell it from a coastline that failed to load.
   suppressMessages(
     p <- map_surface(grid, "density", coastline = fixture[0, ]))
-  vdiffr::expect_doppelganger("no-land", p)
+  expect_map("no-land", p)
 })

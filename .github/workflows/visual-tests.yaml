@@ -1,0 +1,105 @@
+name: visual-tests
+
+# Runs the vdiffr snapshots that test-visual.R skips on generic CI.
+#
+# The baselines are font metrics as much as they are figures: svglite writes
+# text with positions resolved from the system's fonts, so a snapshot only
+# means anything against the image that recorded it. This workflow therefore
+# pins everything typography depends on -- the container tag, the font
+# package, and the vdiffr/svglite versions -- and compares only against
+# baselines regenerated on that same image, kept as the "linux" vdiffr
+# variant in tests/testthat/_snaps/linux/. The variant-less baselines in
+# tests/testthat/_snaps/visual/ belong to whoever runs the suite locally
+# (currently macOS) and are never touched here.
+#
+# First run, and after any intentional figure change: dispatch this workflow
+# with regenerate=true, download the "linux-baselines" artifact, and commit
+# its contents as tests/testthat/_snaps/linux/. Push and PR runs then compare
+# against what was committed, and a failing run uploads the .new.svg diffs as
+# an artifact to look at.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      regenerate:
+        description: 'Record fresh baselines and upload them as an artifact instead of comparing'
+        type: boolean
+        default: false
+
+permissions: read-all
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    # The pin that makes the snapshots comparable at all. Bumping this tag
+    # means regenerating the baselines on the new image in the same commit.
+    container: rocker/r-ver:4.6.1
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # test-visual.R reads this: set, it runs on CI and records/compares the
+      # named vdiffr variant instead of the local baselines.
+      FANCYMAPS_VISUAL_VARIANT: linux
+    steps:
+      - uses: actions/checkout@v4
+
+      # fonts-dejavu-core is the whole point of the job being pinned: r-ver
+      # ships no fonts, so the metrics are exactly one package's. The rest is
+      # what sf and the graphics stack need to build from source.
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            fonts-dejavu-core \
+            libgdal-dev libgeos-dev libproj-dev libudunits2-dev \
+            libcurl4-openssl-dev libssl-dev libxml2-dev \
+            libfontconfig1-dev libfreetype6-dev libpng-dev \
+            libharfbuzz-dev libfribidi-dev libtiff-dev libjpeg-dev
+
+      # deps::. resolves Imports (fancyfx satisfied by the github:: ref, as in
+      # R-CMD-check); vdiffr and svglite are pinned because text layout is
+      # theirs as much as the fonts'.
+      - name: Install R dependencies
+        run: |
+          install.packages("pak", repos = sprintf(
+            "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+            .Platform$pkgType, R.Version()$os, R.Version()$arch))
+          pak::pak(c("deps::.", "github::chross22/fancyfx",
+                     "any::testthat", "any::vdiffr@1.0.9", "any::svglite@2.2.2"))
+        shell: Rscript {0}
+
+      # A compare run with no baselines would "pass" by recording everything,
+      # which is a green check that checked nothing.
+      - name: Refuse to compare against nothing
+        if: ${{ !inputs.regenerate }}
+        run: |
+          if [ ! -d tests/testthat/_snaps/linux ]; then
+            echo "No linux baselines are committed yet."
+            echo "Dispatch this workflow with regenerate=true, download the"
+            echo "linux-baselines artifact, and commit it as tests/testthat/_snaps/linux/."
+            exit 1
+          fi
+
+      - name: Drop old baselines
+        if: ${{ inputs.regenerate }}
+        run: rm -rf tests/testthat/_snaps/linux
+
+      - name: Run visual tests
+        run: testthat::test_local(filter = "visual", stop_on_failure = TRUE)
+        shell: Rscript {0}
+
+      - name: Upload fresh baselines
+        if: ${{ inputs.regenerate }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-baselines
+          path: tests/testthat/_snaps/linux
+
+      - name: Upload snapshot diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-diffs
+          path: tests/testthat/_snaps

@@ -200,16 +200,23 @@ panel_of <- function(md, kind, transform, limits, probs, land, region, extent,
   # than like the scales having silently diverged.
   spec <- spec %||% panel_spec(md, kind, transform, limits, probs, midpoint)
 
-  palette <- switch(kind, surface = "sequential", probability = "bounded",
-                    diverging = "diverging")
+  scales <- if (identical(kind, "count")) {
+    # The caller has already folded the panel's values onto the shared
+    # discrete levels (see map_panels()); the scale pair only names them.
+    count_scale_pair(name %||% scale_name(md$label, spec$note), md$kind)
+  } else {
+    palette <- switch(kind, surface = "sequential", probability = "bounded",
+                      diverging = "diverging")
+    scale_pair(spec, name %||% scale_name(md$label, spec$note), md$kind,
+               palette = palette, direction = direction,
+               midpoint = if (identical(kind, "diverging")) spec$midpoint else NULL)
+  }
 
   p <- ggplot2::ggplot() +
     value_layer(md) +
     land_layer(land) +
     region_layer(region, crs) +
-    scale_pair(spec, name %||% scale_name(md$label, spec$note), md$kind,
-               palette = palette, direction = direction,
-               midpoint = if (identical(kind, "diverging")) spec$midpoint else NULL) +
+    scales +
     coord_for(extent, graticule)
 
   check_furniture_corners(

@@ -11,7 +11,7 @@ map_panels(
   coords = NULL,
   crs = NULL,
   titles = NULL,
-  kind = c("surface", "probability", "diverging"),
+  kind = c("surface", "probability", "diverging", "count"),
   midpoint = NULL,
   direction = 1,
   ncol = NULL,

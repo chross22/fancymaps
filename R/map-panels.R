@@ -60,7 +60,7 @@
 #' @export
 map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
                        titles = NULL, kind = c("surface", "probability",
-                                               "diverging"),
+                                               "diverging", "count"),
                        midpoint = NULL, direction = 1, ncol = NULL,
                        label = NULL,
                        coastline = TRUE, region = NULL,
@@ -86,8 +86,18 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
 
   # The whole reason this function exists: one scale, computed over everything.
   pooled <- unlist(lapply(mds, function(m) m$value), use.names = FALSE)
-  shared <- pooled_spec(pooled, kind = kind, transform = transform,
-                        limits = limits, probs = probs, midpoint = midpoint)
+  if (identical(kind, "count")) {
+    # Discrete levels pooled the same way a continuous scale's limits are:
+    # over every panel, so the per-panel factors agree level for level and
+    # the legends collect into one.
+    cl <- count_levels(pooled)
+    mds <- lapply(mds, function(m) { m$value <- count_factor(m$value, cl); m })
+    shared <- list(note = cl$note, transform = "identity", limits = NULL,
+                   squished = FALSE)
+  } else {
+    shared <- pooled_spec(pooled, kind = kind, transform = transform,
+                          limits = limits, probs = probs, midpoint = midpoint)
+  }
 
   # `legend = "right"` HERE rather than as a position override at the end.
   # The panel theme defaults to a legend along the bottom and sizes the

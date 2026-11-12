@@ -102,3 +102,56 @@ test_that("a midpoint away from zero is named in the legend", {
   expect_match(spec$note, "centred on")
   expect_null(diverging_scale(rnorm(100), midpoint = 0)$note)
 })
+
+test_that("a zero-inflated log scale has no breaks below its offset", {
+  # Flooring the lower limit at machine epsilon once put breaks at 5e-16 and
+  # 2e-08 at the bottom of the legend, printed in full.
+  set.seed(4)
+  v <- c(rep(0, 300), stats::rlnorm(500, -3, 2))
+  suppressMessages(spec <- surface_scale(v))
+  expect_false(is.character(spec$transform))
+  expect_true(all(spec$breaks >= log_offset(v) - 1e-12))
+  expect_false(any(grepl("0000000", spec$labels(spec$breaks))))
+})
+
+test_that("labels are formatted one at a time", {
+  # Formatted as one vector, every label took the digits the smallest needed:
+  # a cap of 4.11 next to 0.0005 printed as 4.1100000000000003.
+  lab <- squish_labels(NULL, c(0, 4.11198), TRUE)(c(0.0005, 2, 4.11198))
+  expect_equal(lab, c("0.0005", "2", "≥ 4.11"))
+})
+
+test_that("a diverging scale marks a cap at each end that was reached", {
+  set.seed(5)
+  spec <- diverging_scale(c(stats::rnorm(200), 15, -12), midpoint = 0)
+  expect_true(spec$squished_low)
+  expect_true(spec$squished_high)
+  lab <- spec$labels(spec$breaks)
+  expect_match(lab[1], "^≤ ")
+  expect_match(lab[length(lab)], "^≥ ")
+  expect_match(squish_note(spec, "MESS"), " and ")
+
+  only_top <- diverging_scale(c(stats::rnorm(200), 15), midpoint = 0,
+                              probs = c(0, 0.99))
+  expect_false(only_top$squished_low)
+  lab <- only_top$labels(only_top$breaks)
+  expect_false(any(grepl("≤", lab)))
+})
+
+test_that("an uncapped diverging scale leaves its breaks to ggplot2", {
+  spec <- diverging_scale(c(-1, 0, 1), midpoint = 0, limits = c(-2, 2))
+  expect_false(spec$squished)
+  expect_s3_class(spec$breaks, "waiver")
+  expect_true(is.function(spec$rescaler))
+})
+
+test_that("no round break sits within a fifth of the bar of the cap", {
+  # A fixed third-of-a-decade gap left "1" and ">= 2.75" 12% of the bar apart
+  # on the example grid, and they overprinted under a pair's horizontal
+  # legend.
+  suppressMessages(spec <- surface_scale(example_grid()$density))
+  pos <- log10(spec$breaks)
+  span <- log10(spec$limits[2]) - log10(spec$limits[1])
+  gaps <- pos[length(pos)] - pos[-length(pos)]
+  expect_true(all(gaps >= span * 0.2 - 1e-9))
+})

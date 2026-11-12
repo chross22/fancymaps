@@ -93,8 +93,40 @@ region_layer <- function(region, crs) {
 # the grid, the land and the outline are one coordinate system rather than
 # three that `coord_sf()` reconciles at draw time. Panels that each reprojected
 # their own layers are how a pair of maps stops lining up.
+#
+# A raster is the exception. Its cells are drawn by `geom_raster()` from their
+# centres, which only works while the centres are a regular grid -- and a
+# reprojection bends them, so a lon/lat raster drawn in the equal-area display
+# CRS came out with every pixel shifted (ggplot2 says so, as a warning nobody
+# reads under a figure that otherwise looks fine). Reprojected, the cells
+# become the polygons they always were and go through the polygon path.
+# Slower, and correct; a raster already in the display CRS keeps the fast path.
 project_md <- function(md, crs) {
+  if (identical(md$kind, "raster") &&
+      sf::st_crs(md$geometry) != sf::st_crs(crs)) {
+    md <- raster_cells(md)
+  }
   md$geometry <- sf::st_transform(md$geometry, crs)
+  md
+}
+
+# A raster's cells as rectangles, from their centres and the resolution
+# `raster_map_data()` recorded.
+raster_cells <- function(md) {
+  res <- md$data$resolution[[1]]
+  xy <- sf::st_coordinates(md$geometry)
+  dx <- res[1] / 2
+  dy <- res[2] / 2
+  md$geometry <- sf::st_sfc(
+    lapply(seq_len(nrow(xy)), function(i) {
+      x <- xy[i, 1]
+      y <- xy[i, 2]
+      sf::st_polygon(list(cbind(c(x - dx, x + dx, x + dx, x - dx, x - dx),
+                                c(y - dy, y - dy, y + dy, y + dy, y - dy))))
+    }),
+    crs = sf::st_crs(md$geometry)
+  )
+  md$kind <- "polygon"
   md
 }
 
@@ -145,7 +177,17 @@ no_land_note <- function(land, requested) {
 
 squish_note <- function(spec, label) {
   if (!isTRUE(spec$squished)) return(NULL)
-  paste0("Colour is capped at ", signif(spec$limits[2], 3),
-         if (!is.null(label)) paste0(" ", label) else "",
+  # A scale that does not say which end it capped is a sequential one, capped
+  # at the top.
+  low <- isTRUE(spec$squished_low)
+  high <- spec$squished_high %||% TRUE
+  unit <- if (!is.null(label)) paste0(" ", label) else ""
+  if (low && high) {
+    return(paste0("Colour is capped at ", signif(spec$limits[1], 3), " and ",
+                  signif(spec$limits[2], 3), unit,
+                  "; cells beyond them are drawn at the caps."))
+  }
+  paste0("Colour is capped ", if (low) "below " else "", "at ",
+         signif(spec$limits[if (low) 1 else 2], 3), unit,
          "; cells beyond it are drawn at the cap.")
 }

@@ -92,7 +92,19 @@
 as_map_data <- function(x, value = NULL, by = NULL, coords = NULL,
                         crs = NULL, label = NULL) {
   label <- label %||% value_label(rlang::enquo(value), value)
+  build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                 label = label)
+}
 
+# The body of `as_map_data()`, with the label taken as given.
+#
+# The drawing verbs work out the label from THEIR caller's expression and call
+# this rather than `as_map_data()`. Going through the exported function would
+# have it capture the expression a second time, one frame down, where all it
+# can see is the symbol `value` -- so a label the verb had deliberately left
+# empty came back as the word "value".
+build_map_data <- function(x, value = NULL, by = NULL, coords = NULL,
+                           crs = NULL, label = NULL) {
   if (inherits(x, "map_data")) return(x)
   if (inherits(x, "SpatRaster")) return(raster_map_data(x, value, label))
 
@@ -346,6 +358,11 @@ check_numeric <- function(v, what) {
 # traceable; a long expression gives nothing rather than a legend title that is
 # a line of code.
 value_label <- function(quo, value) {
+  # The quosure is forced FIRST. Both arguments are promises on the caller's
+  # `value`, and if `value` is evaluated before `rlang::enquo()` runs, the
+  # promise is already forced and `enquo()` hands back the number rather than
+  # the expression -- so every legend read "<dbl>".
+  force(quo)
   if (is.character(value) && length(value) == 1L) return(value)
   if (is.null(value)) return(NULL)
   text <- rlang::as_label(quo)

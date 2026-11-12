@@ -92,7 +92,9 @@ coastline <- function(extent = NULL, source = TRUE, crs = NULL, pad = 0.05) {
   } else if (inherits(source, c("sf", "sfc"))) {
     sf::st_sf(geometry = sf::st_geometry(source))
   } else if (is.character(source) && length(source) == 1L) {
-    read_land_file(source, box)
+    # Normalised to sf, because an .rds can hold a bare sfc and everything
+    # downstream counts rows.
+    sf::st_sf(geometry = sf::st_geometry(read_land_file(source, box)))
   } else {
     stop("`source` should be TRUE, FALSE, a file path, or an sf object -- ",
          "not a ", class(source)[1], ".", call. = FALSE)
@@ -104,7 +106,10 @@ coastline <- function(extent = NULL, source = TRUE, crs = NULL, pad = 0.05) {
   # apart: NULL is "no source could be found", zero rows is "the source was
   # fine and there is no land in this extent". A map of open water is not a
   # broken map, and captioning it as one is its own kind of wrong.
-  crop_land(land, box, crs) %||% empty_land(crs)
+  #
+  # A crop that FAILED is neither: it comes back NULL and is captioned as no
+  # coastline being available, which is what the reader is left with.
+  crop_land(land, box, crs)
 }
 
 # A file the user named. A named file that is missing is an error, not a
@@ -202,7 +207,12 @@ crop_land <- function(land, box, crs) {
     land <- sf::st_transform(land, sf::st_crs(box))
     land <- suppressWarnings(try(sf::st_crop(sf::st_make_valid(land), box),
                                  silent = TRUE))
-    if (inherits(land, "try-error")) return(NULL)
+    if (inherits(land, "try-error")) {
+      warning("the coastline could not be cropped to this extent, so this ",
+              "map is drawn without land.\n  ",
+              conditionMessage(attr(land, "condition")), call. = FALSE)
+      return(NULL)
+    }
     if (!nrow(land)) return(empty_land(sf::st_crs(box)))
   }
   sf::st_make_valid(sf::st_transform(land, crs))

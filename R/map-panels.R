@@ -75,8 +75,8 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
   titles <- titles %||% names(panels)
 
   mds <- lapply(seq_along(panels), function(i) {
-    as_map_data(x, value = panels[[i]], by = by, coords = coords, crs = crs,
-                label = label)
+    build_map_data(x, value = panels[[i]], by = by, coords = coords, crs = crs,
+                   label = label)
   })
 
   crs <- display_crs(mds[[1]], crs)
@@ -98,6 +98,13 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
     shared <- pooled_spec(pooled, kind = kind, transform = transform,
                           limits = limits, probs = probs, midpoint = midpoint)
   }
+
+  # One legend name for every panel, settled here. Panels drawn from columns
+  # each carry their own column name as a label, and a legend per name is a
+  # legend per panel: `guides = "collect"` only merges legends that are
+  # identical, title included. The panel titles already say which column is
+  # which, so a name the panels do not share is left off the legend.
+  legend_label <- label %||% shared_label(mds)
 
   # `legend = "right"` HERE rather than as a position override at the end.
   # The panel theme defaults to a legend along the bottom and sizes the
@@ -126,7 +133,7 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
       scalebar = isTRUE(scalebar) && i == 1L,
       north = isTRUE(north) && i == 1L,
       scalebar_position = scalebar_position, north_position = north_position,
-      name = scale_name(label %||% mds[[i]]$label, shared$note)
+      name = scale_name(legend_label, shared$note)
     )
   })
 
@@ -138,7 +145,7 @@ map_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
     patchwork::plot_annotation(
       title = title, subtitle = subtitle,
       caption = build_caption(caption, list(
-        squish_note(shared, label), no_land_note(land, coastline)
+        squish_note(shared, legend_label), no_land_note(land, coastline)
       )),
       theme = ggplot2::theme(
         plot.title = ggplot2::element_text(size = base_size * 1.2,
@@ -171,6 +178,12 @@ panel_values <- function(x, values) {
        ".\nFor a single map, use map_surface().", call. = FALSE)
 }
 
+# The label every panel agrees on, or NULL when they do not.
+shared_label <- function(mds) {
+  labels <- unique(unlist(lapply(mds, function(m) m$label)))
+  if (length(labels) == 1L) labels else NULL
+}
+
 # How many panels to a row. Up to three go in one row, which is how a short
 # series reads -- left to right, in order. Past that a single row makes each
 # panel too narrow to see, so it wraps towards square.
@@ -192,12 +205,7 @@ pooled_spec <- function(pooled, kind, transform = "auto", limits = NULL,
     surface = surface_scale(pooled, transform = transform, limits = limits,
                             probs = probs),
     probability = list(limits = limits %||% c(0, 1)),
-    diverging = {
-      d <- diverging_scale(pooled, midpoint = midpoint, limits = limits)
-      d$rescaler <- diverging_rescaler(d$midpoint)
-      d$labels <- squish_labels(ggplot2::waiver(), d$limits, d$squished)
-      d
-    }
+    diverging = diverging_scale(pooled, midpoint = midpoint, limits = limits)
   )
   if (identical(kind, "probability")) {
     spec$breaks <- seq(spec$limits[1], spec$limits[2], length.out = 5)

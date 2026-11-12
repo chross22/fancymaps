@@ -19,7 +19,9 @@ and deliberately so -- see below.}
 symmetric.}
 }
 \value{
-A list with \code{limits}, \code{midpoint}, \code{rescaler}, \code{squished} and \code{note}.
+A list with \code{limits}, \code{midpoint}, \code{rescaler}, \code{breaks}, \code{labels},
+\code{squished} (whether anything falls outside \code{limits}, with
+\code{squished_low} and \code{squished_high} saying which end) and \code{note}.
 }
 \description{
 How a diverging surface should be coloured

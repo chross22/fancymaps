@@ -42,3 +42,14 @@ test_that("the north arrow keeps its label inside its own reserved height", {
   expect_lt(label$y, min(triangle$y))
   expect_lt(max(triangle$y), 100)
 })
+
+test_that("the scale bar's label stays inside the panel in a top corner", {
+  # The label sits above the bar. Placed by the bar alone, in a top corner its
+  # baseline landed past the top of the panel and it was clipped away.
+  box <- sf::st_bbox(c(xmin = 0, xmax = 1e5, ymin = 0, ymax = 1e5),
+                     crs = sf::st_crs(32619))
+  for (pos in c("tl", "tr")) {
+    label <- scale_bar(box, pos)[[3]]
+    expect_lt(label$data$y, 1e5 * 0.97)
+  }
+})

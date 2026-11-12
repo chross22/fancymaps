@@ -47,8 +47,15 @@ scale_bar <- function(box, position = c("bl", "br", "tl", "tr"),
   per_km <- (box[["xmax"]] - box[["xmin"]]) / width_km
   bar_units <- bar_km * per_km
 
-  at <- corner(box, position, bar_units)
   height <- (box[["ymax"]] - box[["ymin"]]) * 0.012
+  # The label sits ABOVE the bar, so in a top corner the bar has to come down
+  # far enough to leave room for it. Placed by the bar alone, the label's
+  # baseline landed just past the top of the panel and was clipped away
+  # entirely: a scale bar with no distance on it. The allowance is the gap
+  # (3.4 bar heights) plus a text line, as a fraction of the panel so it holds
+  # at any figure size the way the rest of the furniture does.
+  at <- corner(box, position, bar_units,
+               height * 3.4 + (box[["ymax"]] - box[["ymin"]]) * 0.035)
 
   list(
     ggplot2::annotate("rect",

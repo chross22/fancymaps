@@ -34,7 +34,6 @@ test_that("a diverging surface is the same colour in both renderers", {
   g <- example_grid()
   for (direction in c(1, -1)) {
     spec <- diverging_scale(g$mess, midpoint = 0)
-    spec$rescaler <- diverging_rescaler(0)
     expect_same_colours(map_diverging(g, "mess", midpoint = 0,
                                       direction = direction),
                         g$mess, spec, "diverging", direction)
@@ -45,7 +44,6 @@ test_that("a midpoint away from zero survives into the interactive map", {
   g <- example_grid()
   mid <- mean(g$residual)
   spec <- diverging_scale(g$residual, midpoint = mid)
-  spec$rescaler <- diverging_rescaler(mid)
   expect_same_colours(map_diverging(g, "residual", midpoint = mid),
                       g$residual, spec, "diverging")
 })
@@ -227,4 +225,14 @@ test_that("group names survive being written into JavaScript", {
   expect_equal(js_string("plain"), "'plain'")
   expect_equal(js_string("it's"), "'it\\'s'")
   expect_equal(js_string("a\\b"), "'a\\\\b'")
+})
+
+test_that("a capped diverging legend is marked in the interactive map too", {
+  # leaflet_diverging() set its own pretty() breaks, which never reach the
+  # cap, so the legend had nothing to put the "at least" on.
+  set.seed(6)
+  spec <- diverging_scale(c(stats::rnorm(200), 15, -12), midpoint = 0)
+  labels <- leaflet_legend_labels(spec)
+  expect_match(labels[1], "≤")
+  expect_match(labels[length(labels)], "≥")
 })

@@ -87,8 +87,8 @@ map_surface <- function(x, value = NULL, by = NULL, coords = NULL, crs = NULL,
                         inset_zoom = 8, graticule = FALSE,
                         base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
-  md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                    label = label)
+  md <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                       label = label)
   require_value(md, "map_surface")
 
   crs <- display_crs(md, crs)
@@ -161,8 +161,8 @@ map_probability <- function(x, value = NULL, by = NULL, coords = NULL,
                             inset_zoom = 8, graticule = FALSE,
                             base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
-  md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                    label = label)
+  md <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                       label = label)
   require_value(md, "map_probability")
 
   outside <- sum(md$value < limits[1] | md$value > limits[2], na.rm = TRUE)
@@ -249,14 +249,12 @@ map_diverging <- function(x, value = NULL, midpoint, by = NULL, coords = NULL,
                           inset_zoom = 8, graticule = FALSE,
                           base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
-  md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                    label = label)
+  md <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                       label = label)
   require_value(md, "map_diverging")
 
   spec <- diverging_scale(md$value, midpoint = midpoint, limits = limits,
                           probs = probs)
-  spec$rescaler <- diverging_rescaler(spec$midpoint)
-  spec$labels <- squish_labels(ggplot2::waiver(), spec$limits, spec$squished)
 
   assemble_map(
     md,

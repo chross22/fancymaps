@@ -162,16 +162,16 @@
 <image width='9.96' height='131.51' x='589.75' y='236.98' preserveAspectRatio='none' xlink:href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAEsCAYAAAACUNnVAAAAxUlEQVQ4jYVQyRHEMAgT9LL9l7VVxMrD8cXlj0egiwTP/0dtALRR0NEDgTYC2jB2neAavSRlnzN+C+VsiyQ1ayo7kh3V7IfU76hXce6NdAapO5KBjkzjh4MElGakzN0aJ7K2zGFtabKxXQ9qFCgIKDDR9ozeNS5Wus2zsgIAHwo5JGk54HWUoBdZb3WQZLaQIKCCrK1mTWikCz61vvkbGaQwlriRM+9MCca9l+cfKuMR2dILMqJ51hHl7nx4l1yiLBFd6p4XLgma/kk5NhIAAAAASUVORK5CYII='/>
 <rect x='589.75' y='236.98' width='9.96' height='131.51' style='stroke-width: 1.16; stroke: none;' />
 <polyline points='596.26,355.78 599.71,355.78 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='596.26,304.99 599.71,304.99 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='596.26,251.12 599.71,251.12 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='596.26,314.53 599.71,314.53 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='596.26,273.28 599.71,273.28 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <polyline points='596.26,237.20 599.71,237.20 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <polyline points='593.21,355.78 589.75,355.78 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='593.21,304.99 589.75,304.99 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<polyline points='593.21,251.12 589.75,251.12 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='593.21,314.53 589.75,314.53 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='593.21,273.28 589.75,273.28 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <polyline points='593.21,237.20 589.75,237.20 ' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <text x='605.69' y='359.50' style='font-size: 10.80px; font-family: sans;' textLength='33.04px' lengthAdjust='spacingAndGlyphs'>0.0005</text>
-<text x='605.69' y='308.70' style='font-size: 10.80px; font-family: sans;' textLength='21.02px' lengthAdjust='spacingAndGlyphs'>0.02</text>
-<text x='605.69' y='254.84' style='font-size: 10.80px; font-family: sans;' textLength='6.01px' lengthAdjust='spacingAndGlyphs'>1</text>
+<text x='605.69' y='318.25' style='font-size: 10.80px; font-family: sans;' textLength='21.02px' lengthAdjust='spacingAndGlyphs'>0.01</text>
+<text x='605.69' y='277.00' style='font-size: 10.80px; font-family: sans;' textLength='15.01px' lengthAdjust='spacingAndGlyphs'>0.2</text>
 <text x='605.69' y='240.92' style='font-size: 10.80px; font-family: sans;' textLength='29.95px' lengthAdjust='spacingAndGlyphs'>≥ 2.75</text>
 <text x='45.03' y='12.24' style='font-size: 12.00px; font-weight: bold; font-family: sans;' textLength='92.07px' lengthAdjust='spacingAndGlyphs'>Predicted density</text>
 <text x='45.03' y='570.02' style='font-size: 9.60px; fill: #4D4D4D; font-family: sans;' textLength='336.22px' lengthAdjust='spacingAndGlyphs'>Colour is capped at 2.75 animals per km2; cells beyond it are drawn at the cap.</text>

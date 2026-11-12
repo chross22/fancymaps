@@ -66,3 +66,14 @@ test_that("extent width is measured in km whatever the CRS", {
   expect_equal(extent_width_km(box), 81, tolerance = 0.05)
   expect_equal(extent_width_km(sf::st_bbox(utm_grid())), 30)
 })
+
+test_that("a coastline .rds holding a bare sfc is read as land", {
+  path <- tempfile(fileext = ".rds")
+  on.exit(unlink(path))
+  saveRDS(sf::st_geometry(coastline_fixture()), path)
+  extent <- sf::st_bbox(c(xmin = -70.5, xmax = -67, ymin = 42, ymax = 44.5),
+                        crs = sf::st_crs(4326))
+  land <- coastline(extent, source = path)
+  expect_s3_class(land, "sf")
+  expect_gt(nrow(land), 0)
+})

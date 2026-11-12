@@ -88,13 +88,16 @@ map_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
   kind <- match.arg(kind)
   uncertainty_kind <- match.arg(uncertainty_kind)
 
-  labels <- labels %||% c(value_label(rlang::enquo(value), value),
-                          value_label(rlang::enquo(uncertainty), uncertainty))
+  # A list, not c(): either label can be NULL, and c() would drop it and slide
+  # the uncertainty's label onto the value panel.
+  labels <- as.list(labels %||%
+                      list(value_label(rlang::enquo(value), value),
+                           value_label(rlang::enquo(uncertainty), uncertainty)))
 
-  left <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                      label = labels[1])
-  right <- as_map_data(uncertainty_from %||% x, value = uncertainty, by = by,
-                       coords = coords, crs = crs, label = labels[2])
+  left <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                         label = labels[[1]])
+  right <- build_map_data(uncertainty_from %||% x, value = uncertainty, by = by,
+                          coords = coords, crs = crs, label = labels[[2]])
 
   check_same_cells(left, right, !is.null(uncertainty_from))
 
@@ -248,13 +251,8 @@ panel_spec <- function(md, kind, transform, limits, probs, midpoint = NULL) {
     probability = list(limits = limits %||% c(0, 1),
                        breaks = seq(0, 1, length.out = 5),
                        transform = "identity", squished = FALSE, note = NULL),
-    diverging = {
-      s <- diverging_scale(md$value, midpoint = midpoint %||% 0,
-                           limits = limits, probs = c(0.01, 0.99))
-      s$rescaler <- diverging_rescaler(s$midpoint)
-      s$labels <- squish_labels(ggplot2::waiver(), s$limits, s$squished)
-      s
-    }
+    diverging = diverging_scale(md$value, midpoint = midpoint %||% 0,
+                                limits = limits, probs = c(0.01, 0.99))
   )
 }
 

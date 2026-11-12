@@ -107,7 +107,7 @@ surface_scale <- function(values, transform = "auto", limits = NULL,
   limits <- sane_limits(limits, v)
 
   squished <- any(v > limits[2] + 1e-12) || any(v < limits[1] - 1e-12)
-  breaks <- breaks_125(limits, transform, squished)
+  breaks <- breaks_125(limits, transform, squished, offset)
 
   list(
     transform = trans,
@@ -191,11 +191,20 @@ transform_note <- function(transform, offset) {
 # forced in as the last break. Without it the legend's top label is whichever
 # round number fell below the cap -- 2, when the bar actually runs to 2.75 --
 # and the "at least" marking has nothing to attach to.
-breaks_125 <- function(limits, transform, squished = FALSE) {
+breaks_125 <- function(limits, transform, squished = FALSE, offset = NULL) {
   if (is.character(transform) && identical(transform, "identity")) {
     return(ggplot2::waiver())
   }
-  lo <- max(limits[1], .Machine$double.eps)
+  # A scale that starts at zero has no lowest decade to start the breaks from.
+  # Flooring it at machine epsilon -- which this once did -- filled the bottom
+  # of a zero-inflated legend with breaks at 5e-16 and 2e-08, labelled in full.
+  # On a shifted log the offset is the smallest value the scale resolves from
+  # zero, so the breaks start there; with no offset, ggplot2's own are used.
+  lo <- limits[1]
+  if (lo <= 0) {
+    if (is.null(offset)) return(ggplot2::waiver())
+    lo <- offset
+  }
   hi <- limits[2]
   if (!is.finite(hi) || hi <= lo) return(ggplot2::waiver())
 
@@ -215,11 +224,23 @@ breaks_125 <- function(limits, transform, squished = FALSE) {
   room <- if (squished) 3L else 4L
 
   if (squished) {
-    # A round break too close to the cap collides with its label however the
-    # bar is sized -- they are a third of a decade apart and the labels are
-    # taller than that. The cap wins, because it is the one carrying the
-    # "at least".
-    inside <- inside[inside < hi / 10^0.3]
+    # A round break too close to the cap collides with its label. The cap
+    # wins, because it is the one carrying the "at least".
+    #
+    # "Too close" is a fraction of the BAR, measured where the colours are --
+    # in transformed space, from the bottom of the scale to the cap. It was
+    # once a fixed third of a decade, which on a bar spanning nearly four
+    # decades left "1" and "\u2265 2.75" 12% of the bar apart, and under the
+    # horizontal legend of a pair the two labels printed on top of each other.
+    # A fifth is the same allowance `diverging_breaks()` makes.
+    trans <- as_transform(build_transform(transform, offset))
+    pos <- trans$transform(c(limits[1], hi, inside))
+    span <- pos[2] - pos[1]
+    if (is.finite(span) && span > 0) {
+      inside <- inside[pos[-(1:2)] <= pos[2] - span * 0.2]
+    } else {
+      inside <- inside[inside < hi / 10^0.3]
+    }
   }
   if (length(inside) > room) {
     inside <- unique(inside[round(seq(1, length(inside), length.out = room))])
@@ -235,17 +256,25 @@ breaks_125 <- function(limits, transform, squished = FALSE) {
 # scale -- "5e-04" where the reader wants "0.0005", which is the same number in
 # a form nobody reads off a map -- and the top label has to be able to say the
 # scale is capped.
-squish_labels <- function(breaks, limits, squished) {
+squish_labels <- function(breaks, limits, squished, low = FALSE) {
   function(x) {
     # Rounded before formatting. A forced cap break lands on whatever the
     # quantile happened to be -- 2.749269 -- and a legend that reports six
     # significant figures of a number that was chosen as "the 99th percentile"
     # is claiming a precision the choice never had.
-    lab <- format(signif(x, 3), scientific = FALSE, trim = TRUE,
-                  drop0trailing = TRUE, big.mark = ",")
-    if (!squished) return(lab)
-    at_top <- !is.na(x) & abs(x - limits[2]) < 1e-9 * max(1, abs(limits[2]))
-    lab[at_top] <- paste0("\u2265 ", lab[at_top])
+    #
+    # One label at a time. `format()` on the whole vector gives every element
+    # the digits the smallest one needs, so a cap of 4.11 beside a break of
+    # 0.0005 printed as "4.1100000000000003".
+    lab <- vapply(x, function(xi) {
+      format(signif(xi, 3), scientific = FALSE, trim = TRUE,
+             drop0trailing = TRUE, big.mark = ",")
+    }, character(1))
+    at <- function(end) {
+      !is.na(x) & abs(x - limits[end]) < 1e-9 * max(1, abs(limits[end]))
+    }
+    if (squished) lab[at(2)] <- paste0("\u2265 ", lab[at(2)])
+    if (low) lab[at(1)] <- paste0("\u2264 ", lab[at(1)])
     lab
   }
 }
@@ -285,7 +314,9 @@ sane_limits <- function(limits, v) {
 #' difference of +1 look bigger or smaller than a difference of -1, which is
 #' the one thing the ramp is there to prevent.
 #'
-#' @return A list with `limits`, `midpoint`, `rescaler`, `squished` and `note`.
+#' @return A list with `limits`, `midpoint`, `rescaler`, `breaks`, `labels`,
+#'   `squished` (whether anything falls outside `limits`, with
+#'   `squished_low` and `squished_high` saying which end) and `note`.
 #'
 #' @examples
 #' mess <- c(rnorm(200, 5, 3), rnorm(10, -20, 5))
@@ -310,7 +341,10 @@ diverging_scale <- function(values, midpoint, limits = NULL,
   v <- values[is.finite(values)]
   if (!length(v)) {
     return(list(limits = midpoint + c(-1, 1), midpoint = midpoint,
-                squished = FALSE, note = NULL))
+                rescaler = diverging_rescaler(midpoint),
+                breaks = ggplot2::waiver(), labels = ggplot2::waiver(),
+                squished = FALSE, squished_low = FALSE, squished_high = FALSE,
+                note = NULL))
   }
 
   if (is.null(limits)) {
@@ -323,13 +357,39 @@ diverging_scale <- function(values, midpoint, limits = NULL,
     limits <- midpoint + c(-reach, reach)
   }
 
-  squished <- any(v > limits[2] + 1e-12) || any(v < limits[1] - 1e-12)
+  high <- any(v > limits[2] + 1e-12)
+  low <- any(v < limits[1] - 1e-12)
+  breaks <- diverging_breaks(limits, high, low)
   list(
     limits = limits,
     midpoint = midpoint,
-    squished = squished,
+    rescaler = diverging_rescaler(midpoint),
+    breaks = breaks,
+    labels = squish_labels(breaks, limits, high, low),
+    squished = high || low,
+    squished_low = low,
+    squished_high = high,
     note = if (abs(midpoint) > 1e-12) {
       paste0("centred on ", signif(midpoint, 3))
     } else NULL
   )
+}
+
+# Breaks for a diverging scale, with each capped end forced in as a break.
+#
+# The same reasoning as `breaks_125()`'s cap, at both ends: a symmetric scale
+# squishes on either side, and the "at least" / "at most" marking needs a break
+# AT the cap to attach to. Left to ggplot2 the breaks are round numbers that
+# almost never land on a quantile, so a capped diverging legend said nothing.
+# Round breaks within a fifth of the range of a cap are dropped so the two
+# labels do not collide -- a tenth was not enough under the horizontal bar of
+# a pair, where "≤ -26.6" ran into "-20".
+diverging_breaks <- function(limits, high, low) {
+  if (!high && !low) return(ggplot2::waiver())
+  b <- pretty(limits, n = 5)
+  b <- b[b >= limits[1] & b <= limits[2]]
+  gap <- diff(limits) * 0.2
+  if (high) b <- c(b[b < limits[2] - gap], limits[2])
+  if (low) b <- c(limits[1], b[b > limits[1] + gap])
+  b
 }

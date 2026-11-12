@@ -1,3 +1,40 @@
+# fancymaps (development version)
+
+## Bug fixes
+
+* Legend titles taken from an expression read `<dbl>` instead of the
+  expression: `value_label()` forced `value` before capturing it. A verb that
+  left the label empty also had it refilled as the word "value".
+* `map_panels()` drawn from column names drew one legend per panel, because
+  each panel's legend carried its own column name and patchwork collects only
+  identical legends. The legend now carries a label only when every panel
+  shares it. `leaflet_panels()` no longer titles every period with the first
+  one's name.
+* A zero-inflated surface on a shifted log scale started its breaks at
+  machine epsilon (`0.0000000000000005`). Breaks now start at the offset.
+* Legend labels were formatted as one vector and shared its digits, so a cap
+  printed as `≥ 4.1100000000000003`. They are formatted one at a time.
+* On a capped log scale, the round break nearest the cap could overprint the
+  cap's label: on the example grid, "1" and "≥ 2.75" collided under a pair's
+  horizontal legend. Breaks within a fifth of the bar of the cap are now
+  dropped, measured in transformed space, instead of within a fixed third of a
+  decade.
+* A scale bar in a top corner had its distance label clipped off the top of
+  the panel.
+* A lon/lat raster was drawn by `geom_raster()` from reprojected, irregular
+  cell centres, which shifted every pixel. A raster that needs reprojecting is
+  now drawn as cell polygons. One already in the display CRS keeps the raster
+  path.
+* A capped diverging scale never marked its cap, in either renderer.
+  `diverging_scale()` now forces each capped end in as a break, marks it `≥`
+  or `≤`, and returns the `rescaler`, `breaks` and `labels` it documented.
+  The caption names both caps when both ends were reached.
+* `map_pair()` and `leaflet_pair()` put the uncertainty's label on the value
+  panel when the value's label was empty.
+* A coastline `.rds` holding a bare `sfc` failed. A coastline that could not
+  be cropped was captioned as an extent with no land in it. It now warns and
+  is captioned as no coastline being available.
+
 # fancymaps 0.1.0
 
 First tagged release. Everything below is new, in the sense that nothing was

@@ -38,8 +38,8 @@ map_count <- function(x, value = NULL, by = NULL, coords = NULL, crs = NULL,
                       inset_zoom = 8, graticule = FALSE,
                       base_size = 12, theme = NULL, expand = 0.02) {
   label <- label %||% value_label(rlang::enquo(value), value)
-  md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                    label = label)
+  md <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                       label = label)
   require_value(md, "map_count")
 
   cl <- count_levels(md$value, cap = cap)

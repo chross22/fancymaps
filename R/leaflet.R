@@ -101,8 +101,8 @@ leaflet_surface <- function(x, value = NULL, by = NULL, coords = NULL,
                             tiles = "Esri.WorldGrayCanvas", opacity = 0.8,
                             legend = TRUE) {
   label <- label %||% value_label(rlang::enquo(value), value)
-  md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                    label = label)
+  md <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                       label = label)
   require_value(md, "leaflet_surface")
 
   spec <- surface_scale(md$value, transform = transform, limits = limits,
@@ -118,8 +118,8 @@ leaflet_probability <- function(x, value = NULL, by = NULL, coords = NULL,
                                 popup = NULL, tiles = "Esri.WorldGrayCanvas",
                                 opacity = 0.8, legend = TRUE) {
   label <- label %||% value_label(rlang::enquo(value), value)
-  md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                    label = label)
+  md <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                       label = label)
   require_value(md, "leaflet_probability")
 
   spec <- list(limits = limits, transform = "identity",
@@ -138,18 +138,13 @@ leaflet_diverging <- function(x, value = NULL, midpoint, by = NULL,
                               tiles = "Esri.WorldGrayCanvas", opacity = 0.8,
                               legend = TRUE) {
   label <- label %||% value_label(rlang::enquo(value), value)
-  md <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                    label = label)
+  md <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                       label = label)
   require_value(md, "leaflet_diverging")
 
   spec <- diverging_scale(md$value, midpoint = midpoint, limits = limits,
                           probs = probs)
-  spec$rescaler <- diverging_rescaler(spec$midpoint)
   spec$transform <- "identity"
-  spec$breaks <- pretty(spec$limits, n = 5)
-  spec$breaks <- spec$breaks[spec$breaks >= spec$limits[1] &
-                               spec$breaks <= spec$limits[2]]
-  spec$labels <- squish_labels(spec$breaks, spec$limits, spec$squished)
 
   assemble_leaflet(md, spec, palette = "diverging", direction = direction,
                    popup = popup, tiles = tiles, opacity = opacity,
@@ -397,13 +392,16 @@ leaflet_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
   kind <- match.arg(kind)
   uncertainty_kind <- match.arg(uncertainty_kind)
 
-  labels <- labels %||% c(value_label(rlang::enquo(value), value),
-                          value_label(rlang::enquo(uncertainty), uncertainty))
+  # A list, not c(): either label can be NULL, and c() would drop it and slide
+  # the uncertainty's label onto the value panel.
+  labels <- as.list(labels %||%
+                      list(value_label(rlang::enquo(value), value),
+                           value_label(rlang::enquo(uncertainty), uncertainty)))
 
-  left <- as_map_data(x, value = value, by = by, coords = coords, crs = crs,
-                      label = labels[1])
-  right <- as_map_data(uncertainty_from %||% x, value = uncertainty, by = by,
-                       coords = coords, crs = crs, label = labels[2])
+  left <- build_map_data(x, value = value, by = by, coords = coords, crs = crs,
+                         label = labels[[1]])
+  right <- build_map_data(uncertainty_from %||% x, value = uncertainty, by = by,
+                          coords = coords, crs = crs, label = labels[[2]])
   check_same_cells(left, right, !is.null(uncertainty_from))
 
   specs <- list(
@@ -415,7 +413,7 @@ leaflet_pair <- function(x, value, uncertainty, uncertainty_from = NULL,
   directions <- c(1, uncertainty_direction)
   names <- c(scale_name(left$label, specs[[1]]$note),
              scale_name(right$label, specs[[2]]$note))
-  groups <- c(labels[1] %||% "value", labels[2] %||% "uncertainty")
+  groups <- c(labels[[1]] %||% "value", labels[[2]] %||% "uncertainty")
 
   m <- leaflet_base(tiles)
   for (i in 1:2) {
@@ -490,8 +488,8 @@ leaflet_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
   titles <- titles %||% names(panels)
 
   mds <- lapply(panels, function(v) {
-    as_map_data(x, value = v, by = by, coords = coords, crs = crs,
-                label = label)
+    build_map_data(x, value = v, by = by, coords = coords, crs = crs,
+                   label = label)
   })
 
   # The same pooled scale the static version uses, from the same function --
@@ -513,7 +511,7 @@ leaflet_panels <- function(x, values, by = NULL, coords = NULL, crs = NULL,
     # sits still while the map changes under it is the visible evidence that
     # the periods are on one scale.
     m <- add_spec_legend(m, shared, palette, direction,
-                         scale_name(label %||% mds[[1]]$label, shared$note))
+                         scale_name(label %||% shared_label(mds), shared$note))
   }
 
   m <- leaflet::addLayersControl(

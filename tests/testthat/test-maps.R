@@ -297,3 +297,26 @@ test_that("a pair with nothing capped carries no cap note", {
   expect_false(grepl("capped", p$patches$annotation$caption %||% "",
                      fixed = TRUE))
 })
+
+test_that("panels drawn from column names still collect into one legend", {
+  # Each panel took its own column name as its legend title, and patchwork
+  # only collects legends that are identical -- so c("a", "b") drew two.
+  g <- example_grid()
+  g$a <- g$occupancy
+  g$b <- rev(g$occupancy)
+  p <- map_panels(g, c("a", "b"), kind = "probability", coastline = FALSE)
+  names <- vapply(1:2, function(i) p[[i]]$scales$get_scales("fill")$name,
+                  character(1))
+  expect_equal(names[1], names[2])
+})
+
+test_that("a pair keeps each label on its own panel when one is empty", {
+  # c(NULL, "mess") is "mess", which put the uncertainty's label on the value
+  # panel and NA on the uncertainty.
+  g <- example_grid()
+  suppressMessages(
+    p <- map_pair(g, sqrt(g$density), "mess", uncertainty_kind = "diverging",
+                  coastline = FALSE))
+  expect_equal(p[[2]]$scales$get_scales("fill")$name, "mess")
+  expect_false(grepl("mess", p[[1]]$scales$get_scales("fill")$name))
+})

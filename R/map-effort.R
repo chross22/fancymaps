@@ -68,11 +68,11 @@ map_effort <- function(tracks = NULL, points = NULL, value = NULL,
   label <- label %||% value_label(rlang::enquo(value), value)
 
   md_tracks <- if (!is.null(tracks)) {
-    as_map_data(tracks, coords = coords, crs = crs)
+    build_map_data(tracks, coords = coords, crs = crs)
   }
   md_points <- if (!is.null(points)) {
-    as_map_data(points, value = value, coords = coords, crs = crs,
-                label = label)
+    build_map_data(points, value = value, coords = coords, crs = crs,
+                   label = label)
   }
 
   crs <- display_crs(md_tracks %||% md_points, crs)
@@ -288,8 +288,8 @@ hex_polygons <- function(x, y, cellsize, crs) {
 hex_surface <- function(x, value = NULL, bins = 30, fun = "mean",
                         coords = NULL, crs = NULL) {
   label <- value_label(rlang::enquo(value), value)
-  md <- as_map_data(x, value = value, coords = coords, crs = crs,
-                    label = label)
+  md <- build_map_data(x, value = value, coords = coords, crs = crs,
+                       label = label)
   if (!identical(md$kind, "point")) {
     stop("hex_surface() bins points, and this is ", md$kind, " geometry.\n",
          "  For a quantity already on polygons, hand it to a map verb ",
